@@ -1,16 +1,47 @@
 #include "widgets/TableCrudWidget.h"
 
+#include "crud/CrudTableCatalog.h"
 #include "db/DatabaseManager.h"
+#include "ui_TableCrudWidget.h"
 
-#include <QHBoxLayout>
+#include <QFont>
 #include <QHeaderView>
 #include <QMessageBox>
-#include <QPushButton>
+#include <QSignalBlocker>
 #include <QSqlDatabase>
 #include <QSqlError>
+#include <QSqlRecord>
 #include <QSqlTableModel>
-#include <QTableView>
-#include <QVBoxLayout>
+
+namespace {
+
+class CrudSqlTableModel : public QSqlTableModel
+{
+public:
+    CrudSqlTableModel(const QString &tableName, QObject *parent, QSqlDatabase db)
+        : QSqlTableModel(parent, db)
+        , m_tableName(tableName)
+    {
+    }
+
+    Qt::ItemFlags flags(const QModelIndex &index) const override
+    {
+        Qt::ItemFlags itemFlags = QSqlTableModel::flags(index);
+        if (!index.isValid()) {
+            return itemFlags;
+        }
+        const QString fieldName = record().fieldName(index.column());
+        if (CrudTableCatalog::isReadOnlyColumn(m_tableName, fieldName)) {
+            itemFlags &= ~Qt::ItemIsEditable;
+        }
+        return itemFlags;
+    }
+
+private:
+    QString m_tableName;
+};
+
+} // namespace
 
 TableCrudWidget::TableCrudWidget(const QString &tableName,
                                  const QString &filterClause,
@@ -18,48 +49,119 @@ TableCrudWidget::TableCrudWidget(const QString &tableName,
     : QWidget(parent)
     , m_tableName(tableName)
     , m_filterClause(filterClause)
+    , ui(new Ui::TableCrudWidget)
 {
-    auto *layout = new QVBoxLayout(this);
+    ui->setupUi(this);
 
-    auto *toolbar = new QHBoxLayout;
-    auto *addButton = new QPushButton(tr("Добавить"), this);
-    auto *removeButton = new QPushButton(tr("Удалить"), this);
-    auto *saveButton = new QPushButton(tr("Сохранить"), this);
-    auto *revertButton = new QPushButton(tr("Отменить"), this);
-    auto *refreshButton = new QPushButton(tr("Обновить"), this);
+    QFont titleFont = ui->titleLabel->font();
+    titleFont.setBold(true);
+    ui->titleLabel->setFont(titleFont);
+    ui->titleLabel->setText(
+        tr("%1 — редактирование справочника").arg(CrudTableCatalog::tableDisplayName(m_tableName)));
 
-    toolbar->addWidget(addButton);
-    toolbar->addWidget(removeButton);
-    toolbar->addWidget(saveButton);
-    toolbar->addWidget(revertButton);
-    toolbar->addWidget(refreshButton);
-    toolbar->addStretch();
-    layout->addLayout(toolbar);
+    ui->tableView->horizontalHeader()->setStretchLastSection(true);
+    ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
 
-    m_view = new QTableView(this);
-    m_view->setAlternatingRowColors(true);
-    m_view->horizontalHeader()->setStretchLastSection(true);
-    layout->addWidget(m_view);
+    ui->saveButton->setEnabled(false);
+    ui->revertButton->setEnabled(false);
 
-    connect(addButton, &QPushButton::clicked, this, &TableCrudWidget::addRow);
-    connect(removeButton, &QPushButton::clicked, this, &TableCrudWidget::removeRow);
-    connect(saveButton, &QPushButton::clicked, this, &TableCrudWidget::saveChanges);
-    connect(revertButton, &QPushButton::clicked, this, &TableCrudWidget::revertChanges);
-    connect(refreshButton, &QPushButton::clicked, this, &TableCrudWidget::refresh);
+    connect(ui->addButton, &QPushButton::clicked, this, &TableCrudWidget::addRow);
+    connect(ui->removeButton, &QPushButton::clicked, this, &TableCrudWidget::removeRow);
+    connect(ui->saveButton, &QPushButton::clicked, this, &TableCrudWidget::saveChanges);
+    connect(ui->revertButton, &QPushButton::clicked, this, &TableCrudWidget::revertChanges);
+    connect(ui->refreshButton, &QPushButton::clicked, this, &TableCrudWidget::onRefreshClicked);
 
     refresh();
 }
 
-void TableCrudWidget::refresh()
+TableCrudWidget::~TableCrudWidget()
 {
     if (m_model) {
-        m_view->setModel(nullptr);
+        ui->tableView->setModel(nullptr);
+        delete m_model;
+        m_model = nullptr;
+    }
+    delete ui;
+}
+
+QString TableCrudWidget::tableName() const
+{
+    return m_tableName;
+}
+
+bool TableCrudWidget::hasUnsavedChanges() const
+{
+    return m_dirty;
+}
+
+void TableCrudWidget::connectModelSignals()
+{
+    if (!m_model) {
+        return;
+    }
+
+    connect(m_model, &QSqlTableModel::dataChanged, this, [this]() { setDirty(true); });
+    connect(m_model, &QSqlTableModel::rowsInserted, this, [this]() { setDirty(true); });
+    connect(m_model, &QSqlTableModel::rowsRemoved, this, [this]() { setDirty(true); });
+    connect(m_model, &QSqlTableModel::modelReset, this, &TableCrudWidget::updateStatus);
+}
+
+void TableCrudWidget::setDirty(bool dirty)
+{
+    m_dirty = dirty;
+    ui->saveButton->setEnabled(dirty);
+    ui->revertButton->setEnabled(dirty);
+    updateStatus();
+}
+
+void TableCrudWidget::applyColumnHeaders()
+{
+    if (!m_model) {
+        return;
+    }
+    for (int col = 0; col < m_model->columnCount(); ++col) {
+        const QString fieldName = m_model->record().fieldName(col);
+        m_model->setHeaderData(col, Qt::Horizontal,
+                             CrudTableCatalog::columnTitle(m_tableName, fieldName));
+    }
+}
+
+void TableCrudWidget::updateStatus()
+{
+    if (!m_model) {
+        ui->statusLabel->setText(tr("Ошибка загрузки таблицы"));
+        return;
+    }
+
+    const int rows = m_model->rowCount();
+    QString text;
+    if (rows == 0) {
+        text = tr("Нет записей. Нажмите «Добавить», чтобы создать строку.");
+    } else {
+        text = tr("Строк: %1").arg(rows);
+    }
+
+    if (m_dirty) {
+        text += tr(" · Есть несохранённые изменения");
+    }
+
+    ui->statusLabel->setText(text);
+}
+
+void TableCrudWidget::refresh()
+{
+    const int previousRow = ui->tableView->currentIndex().isValid()
+                                ? ui->tableView->currentIndex().row()
+                                : -1;
+
+    if (m_model) {
+        ui->tableView->setModel(nullptr);
         delete m_model;
         m_model = nullptr;
     }
 
     const QString connectionName = DatabaseManager::instance().connectionName();
-    m_model = new QSqlTableModel(this, QSqlDatabase::database(connectionName));
+    m_model = new CrudSqlTableModel(m_tableName, this, QSqlDatabase::database(connectionName));
     m_model->setTable(m_tableName);
     m_model->setEditStrategy(QSqlTableModel::OnManualSubmit);
 
@@ -69,11 +171,52 @@ void TableCrudWidget::refresh()
 
     if (!m_model->select()) {
         QMessageBox::critical(this, tr("Ошибка"), m_model->lastError().text());
+        setDirty(false);
+        updateStatus();
         return;
     }
 
-    m_view->setModel(m_model);
-    m_view->resizeColumnsToContents();
+    applyColumnHeaders();
+    ui->tableView->setModel(m_model);
+    ui->tableView->resizeColumnsToContents();
+
+    if (previousRow >= 0 && previousRow < m_model->rowCount()) {
+        ui->tableView->selectRow(previousRow);
+    }
+
+    connectModelSignals();
+    setDirty(false);
+    updateStatus();
+}
+
+bool TableCrudWidget::maybeDiscardChanges()
+{
+    if (!m_dirty) {
+        return true;
+    }
+
+    const QMessageBox::StandardButton answer = QMessageBox::question(
+        this,
+        tr("Несохранённые изменения"),
+        tr("В таблице «%1» есть несохранённые изменения. Отменить их и перейти дальше?")
+            .arg(CrudTableCatalog::tableDisplayName(m_tableName)),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+
+    if (answer != QMessageBox::Yes) {
+        return false;
+    }
+
+    revertChanges();
+    return true;
+}
+
+void TableCrudWidget::onRefreshClicked()
+{
+    if (!maybeDiscardChanges()) {
+        return;
+    }
+    refresh();
 }
 
 void TableCrudWidget::addRow()
@@ -83,6 +226,8 @@ void TableCrudWidget::addRow()
     }
     const int row = m_model->rowCount();
     m_model->insertRow(row);
+    ui->tableView->selectRow(row);
+    setDirty(true);
 }
 
 void TableCrudWidget::removeRow()
@@ -90,11 +235,24 @@ void TableCrudWidget::removeRow()
     if (!m_model) {
         return;
     }
-    const QModelIndex index = m_view->currentIndex();
+    const QModelIndex index = ui->tableView->currentIndex();
     if (!index.isValid()) {
+        QMessageBox::information(this, tr("Удаление"), tr("Выберите строку для удаления."));
         return;
     }
+
+    const QMessageBox::StandardButton answer = QMessageBox::question(
+        this,
+        tr("Удаление"),
+        tr("Удалить выбранную строку? Изменения нужно сохранить кнопкой «Сохранить»."),
+        QMessageBox::Yes | QMessageBox::No,
+        QMessageBox::No);
+    if (answer != QMessageBox::Yes) {
+        return;
+    }
+
     m_model->removeRow(index.row());
+    setDirty(true);
 }
 
 void TableCrudWidget::saveChanges()
@@ -102,11 +260,29 @@ void TableCrudWidget::saveChanges()
     if (!m_model) {
         return;
     }
+
+    const int currentRow = ui->tableView->currentIndex().row();
+
+    QSignalBlocker blocker(m_model);
+
     if (!m_model->submitAll()) {
         QMessageBox::critical(this, tr("Ошибка сохранения"), m_model->lastError().text());
         return;
     }
-    refresh();
+
+    if (!m_model->select()) {
+        QMessageBox::critical(this, tr("Ошибка"), m_model->lastError().text());
+        return;
+    }
+
+    applyColumnHeaders();
+
+    if (currentRow >= 0 && currentRow < m_model->rowCount()) {
+        ui->tableView->selectRow(currentRow);
+    }
+
+    setDirty(false);
+    updateStatus();
 }
 
 void TableCrudWidget::revertChanges()
@@ -114,4 +290,6 @@ void TableCrudWidget::revertChanges()
     if (m_model) {
         m_model->revertAll();
     }
+    setDirty(false);
+    updateStatus();
 }

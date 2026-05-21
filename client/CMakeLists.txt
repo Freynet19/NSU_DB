@@ -16,6 +16,7 @@ qt_add_executable(automotive_erp_client
     src/db/DatabaseManager.cpp
     src/db/QueryRepository.cpp
     src/db/LookupRepository.cpp
+    src/crud/CrudTableCatalog.cpp
     src/reports/ReportCatalog.cpp
     src/reports/ReportFilterBuilder.cpp
     src/procedures/ProcedureCatalog.cpp
@@ -23,6 +24,7 @@ qt_add_executable(automotive_erp_client
     src/auth/LoginDialog.cpp
     src/shell/MainWindow.cpp
     src/widgets/TableCrudWidget.cpp
+    src/widgets/CrudHubWidget.cpp
     src/widgets/ReportTableWidget.cpp
     src/widgets/ReportsHubWidget.cpp
     src/widgets/ProcedureFormWidget.cpp
@@ -35,6 +37,8 @@ qt_add_executable(automotive_erp_client
     ui/ReportTableWidget.ui
     ui/ReportsHubWidget.ui
     ui/ProceduresHubWidget.ui
+    ui/TableCrudWidget.ui
+    ui/CrudHubWidget.ui
     resources/app.qrc
 )
 
