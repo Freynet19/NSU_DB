@@ -17,11 +17,15 @@ qt_add_executable(automotive_erp_client
     src/db/QueryRepository.cpp
     src/reports/ReportCatalog.cpp
     src/reports/ReportFilterBuilder.cpp
+    src/procedures/ProcedureCatalog.cpp
+    src/procedures/ProcedureFormBuilder.cpp
     src/auth/LoginDialog.cpp
     src/shell/MainWindow.cpp
     src/widgets/TableCrudWidget.cpp
     src/widgets/ReportTableWidget.cpp
     src/widgets/ReportsHubWidget.cpp
+    src/widgets/ProcedureFormWidget.cpp
+    src/widgets/ProceduresHubWidget.cpp
     src/roles/AdminWidget.cpp
     src/roles/HrWidget.cpp
     src/roles/ProductionReportWidget.cpp
@@ -29,6 +33,7 @@ qt_add_executable(automotive_erp_client
     ui/MainWindow.ui
     ui/ReportTableWidget.ui
     ui/ReportsHubWidget.ui
+    ui/ProceduresHubWidget.ui
     resources/app.qrc
 )
 
