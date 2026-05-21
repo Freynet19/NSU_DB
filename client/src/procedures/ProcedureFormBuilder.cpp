@@ -1,5 +1,6 @@
 #include "procedures/ProcedureFormBuilder.h"
 
+#include "db/LookupRepository.h"
 #include "db/QueryRepository.h"
 #include "procedures/ProcedureCatalog.h"
 #include "widgets/FilterHelpers.h"
@@ -39,9 +40,10 @@ void addExecuteButton(QFormLayout *form,
 } // namespace
 
 void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
-                                       ProcedureId procedureId,
-                                       QueryRepository *repository,
-                                       QWidget *messageParent)
+                                     ProcedureId procedureId,
+                                     QueryRepository *repository,
+                                     LookupRepository *lookups,
+                                     QWidget *messageParent)
 {
     widget->clearForm();
     QFormLayout *form = widget->formLayout();
@@ -51,14 +53,14 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         auto *name = new QLineEdit(widget);
         auto *birth = addDateFilter(form, QObject::tr("Дата рождения"), QDate(1990, 1, 1), widget);
         auto *hire = addDateFilter(form, QObject::tr("Дата приёма"), QDate::currentDate(), widget);
-        auto *cat = new QSpinBox(widget);
-        cat->setRange(1, 99);
+        auto *cat = addRequiredEntityCombo(form, QObject::tr("Категория персонала"), widget,
+                                           lookups->items(LookupKind::PersonnelCategory));
         auto *spec = new QLineEdit(widget);
         auto *grade = new QSpinBox(widget);
         grade->setRange(1, 8);
-        auto *brigade = addOptionalIntFilter(form, QObject::tr("Бригада"), widget);
+        auto *brigade = addOptionalEntityCombo(form, QObject::tr("Бригада"), widget,
+                                               lookups->items(LookupKind::Brigade));
         form->addRow(QObject::tr("ФИО"), name);
-        form->addRow(QObject::tr("Код категории"), cat);
         form->addRow(QObject::tr("Специальность"), spec);
         form->addRow(QObject::tr("Разряд"), grade);
         addExecuteButton(form,
@@ -68,8 +70,8 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
                          QObject::tr("Рабочий принят."),
                          [repository, name, birth, hire, cat, spec, grade, brigade](QString *err) {
                              return repository->callProcHireWorker(
-                                 name->text(), birth->date(), hire->date(), cat->value(), spec->text(),
-                                 grade->value(), optionalSpinValue(brigade), err);
+                                 name->text(), birth->date(), hire->date(), requiredComboValue(cat),
+                                 spec->text(), grade->value(), optionalComboValue(brigade), err);
                          });
         break;
     }
@@ -77,12 +79,11 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         auto *name = new QLineEdit(widget);
         auto *birth = addDateFilter(form, QObject::tr("Дата рождения"), QDate(1985, 5, 10), widget);
         auto *hire = addDateFilter(form, QObject::tr("Дата приёма"), QDate::currentDate(), widget);
-        auto *cat = new QSpinBox(widget);
-        cat->setRange(1, 99);
+        auto *cat = addRequiredEntityCombo(form, QObject::tr("Категория персонала"), widget,
+                                           lookups->items(LookupKind::PersonnelCategory));
         auto *pos = new QLineEdit(widget);
         auto *qual = new QLineEdit(widget);
         form->addRow(QObject::tr("ФИО"), name);
-        form->addRow(QObject::tr("Код категории"), cat);
         form->addRow(QObject::tr("Должность"), pos);
         form->addRow(QObject::tr("Квалификация"), qual);
         addExecuteButton(form,
@@ -92,17 +93,19 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
                          QObject::tr("ИТП принят."),
                          [repository, name, birth, hire, cat, pos, qual](QString *err) {
                              return repository->callProcHireItp(name->text(), birth->date(), hire->date(),
-                                                              cat->value(), pos->text(), qual->text(), err);
+                                                              requiredComboValue(cat), pos->text(),
+                                                              qual->text(), err);
                          });
         break;
     }
     case ProcedureId::TransferEmployee: {
-        auto *emp = new QSpinBox(widget);
-        emp->setRange(1, 99999);
-        auto *brigade = addOptionalIntFilter(form, QObject::tr("Новая бригада"), widget);
-        auto *section = addOptionalIntFilter(form, QObject::tr("Новый участок (мастер)"), widget);
+        auto *emp = addRequiredEntityCombo(form, QObject::tr("Сотрудник"), widget,
+                                         lookups->items(LookupKind::Employee));
+        auto *brigade = addOptionalEntityCombo(form, QObject::tr("Новая бригада"), widget,
+                                               lookups->items(LookupKind::Brigade));
+        auto *section = addOptionalEntityCombo(form, QObject::tr("Новый участок (мастер)"), widget,
+                                               lookups->items(LookupKind::Section));
         auto *desc = new QLineEdit(widget);
-        form->addRow(QObject::tr("ID сотрудника"), emp);
         form->addRow(QObject::tr("Описание"), desc);
         addExecuteButton(form,
                          widget,
@@ -111,16 +114,15 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
                          QObject::tr("Перевод выполнен."),
                          [repository, emp, brigade, section, desc](QString *err) {
                              return repository->callProcTransferEmployee(
-                                 emp->value(), optionalSpinValue(brigade), optionalSpinValue(section),
-                                 desc->text(), err);
+                                 requiredComboValue(emp), optionalComboValue(brigade),
+                                 optionalComboValue(section), desc->text(), err);
                          });
         break;
     }
     case ProcedureId::DismissEmployee: {
-        auto *emp = new QSpinBox(widget);
-        emp->setRange(1, 99999);
+        auto *emp = addRequiredEntityCombo(form, QObject::tr("Сотрудник"), widget,
+                                         lookups->items(LookupKind::Employee));
         auto *desc = new QLineEdit(widget);
-        form->addRow(QObject::tr("ID сотрудника"), emp);
         form->addRow(QObject::tr("Описание"), desc);
         addExecuteButton(form,
                          widget,
@@ -128,21 +130,19 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
                          QObject::tr("Уволить сотрудника"),
                          QObject::tr("Увольнение зарегистрировано."),
                          [repository, emp, desc](QString *err) {
-                             return repository->callProcDismissEmployee(emp->value(), desc->text(), err);
+                             return repository->callProcDismissEmployee(requiredComboValue(emp),
+                                                                      desc->text(), err);
                          });
         break;
     }
     case ProcedureId::AssignBrigadeToStage: {
-        auto *inst = new QSpinBox(widget);
-        auto *stage = new QSpinBox(widget);
-        auto *brig = new QSpinBox(widget);
+        auto *inst = addRequiredEntityCombo(form, QObject::tr("Экземпляр изделия"), widget,
+                                          lookups->items(LookupKind::ProductInstance));
+        auto *stage = addRequiredEntityCombo(form, QObject::tr("Этап производства"), widget,
+                                           lookups->items(LookupKind::ProductionStage));
+        auto *brig = addRequiredEntityCombo(form, QObject::tr("Бригада"), widget,
+                                            lookups->items(LookupKind::Brigade));
         auto *start = addDateFilter(form, QObject::tr("Дата начала"), QDate::currentDate(), widget);
-        inst->setRange(1, 99999);
-        stage->setRange(1, 99999);
-        brig->setRange(1, 99999);
-        form->addRow(QObject::tr("ID экземпляра"), inst);
-        form->addRow(QObject::tr("ID этапа"), stage);
-        form->addRow(QObject::tr("ID бригады"), brig);
         addExecuteButton(form,
                          widget,
                          messageParent,
@@ -150,49 +150,48 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
                          QObject::tr("Бригада назначена на этап."),
                          [repository, inst, stage, brig, start](QString *err) {
                              return repository->callProcAssignBrigadeToStage(
-                                 inst->value(), stage->value(), brig->value(), start->date(), err);
+                                 requiredComboValue(inst), requiredComboValue(stage),
+                                 requiredComboValue(brig), start->date(), err);
                          });
         break;
     }
     case ProcedureId::CompleteStage: {
-        auto *rec = new QSpinBox(widget);
+        auto *rec = addRequiredEntityCombo(form, QObject::tr("Запись сборки"), widget,
+                                         lookups->items(LookupKind::AssemblyRecord));
         auto *end = addDateFilter(form, QObject::tr("Дата завершения"), QDate::currentDate(), widget);
-        rec->setRange(1, 99999);
-        form->addRow(QObject::tr("ID записи сборки"), rec);
         addExecuteButton(form,
                          widget,
                          messageParent,
                          QObject::tr("Завершить этап сборки"),
                          QObject::tr("Этап завершён."),
                          [repository, rec, end](QString *err) {
-                             return repository->callProcCompleteStage(rec->value(), end->date(), err);
+                             return repository->callProcCompleteStage(requiredComboValue(rec),
+                                                                    end->date(), err);
                          });
         break;
     }
     case ProcedureId::RegisterTest: {
-        auto *inst = new QSpinBox(widget);
-        auto *lab = new QSpinBox(widget);
+        auto *inst = addRequiredEntityCombo(form, QObject::tr("Экземпляр изделия"), widget,
+                                          lookups->items(LookupKind::ProductInstance));
+        auto *lab = addRequiredEntityCombo(form, QObject::tr("Лаборатория"), widget,
+                                           lookups->items(LookupKind::Laboratory));
         auto *date = addDateFilter(form, QObject::tr("Дата испытания"), QDate::currentDate(), widget);
-        inst->setRange(1, 99999);
-        lab->setRange(1, 99999);
-        form->addRow(QObject::tr("ID экземпляра"), inst);
-        form->addRow(QObject::tr("ID лаборатории"), lab);
         addExecuteButton(form,
                          widget,
                          messageParent,
                          QObject::tr("Зарегистрировать испытание"),
                          QObject::tr("Испытание зарегистрировано."),
                          [repository, inst, lab, date](QString *err) {
-                             return repository->callProcRegisterTest(inst->value(), lab->value(),
+                             return repository->callProcRegisterTest(requiredComboValue(inst),
+                                                                     requiredComboValue(lab),
                                                                      date->date(), err);
                          });
         break;
     }
     case ProcedureId::CompleteTest: {
-        auto *testId = new QSpinBox(widget);
+        auto *testId = addRequiredEntityCombo(form, QObject::tr("Испытание"), widget,
+                                              lookups->items(LookupKind::Test));
         auto *result = new QLineEdit(widget);
-        testId->setRange(1, 99999);
-        form->addRow(QObject::tr("ID испытания"), testId);
         form->addRow(QObject::tr("Результат"), result);
         addExecuteButton(form,
                          widget,
@@ -200,7 +199,8 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
                          QObject::tr("Завершить испытание"),
                          QObject::tr("Испытание завершено."),
                          [repository, testId, result](QString *err) {
-                             return repository->callProcCompleteTest(testId->value(), result->text(), err);
+                             return repository->callProcCompleteTest(requiredComboValue(testId),
+                                                                     result->text(), err);
                          });
         break;
     }

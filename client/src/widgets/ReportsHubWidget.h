@@ -6,6 +6,7 @@
 #include <QList>
 #include <QWidget>
 
+class LookupRepository;
 class QueryRepository;
 
 namespace Ui {
@@ -25,6 +26,7 @@ private:
 
     Ui::ReportsHubWidget *ui = nullptr;
     QueryRepository *m_repository = nullptr;
+    LookupRepository *m_lookups = nullptr;
     QList<ReportDefinition> m_reports;
     class ReportTableWidget *m_reportWidget = nullptr;
 };

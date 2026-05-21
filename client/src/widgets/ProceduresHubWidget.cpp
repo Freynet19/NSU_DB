@@ -1,5 +1,7 @@
 #include "widgets/ProceduresHubWidget.h"
 
+#include "db/DatabaseManager.h"
+#include "db/LookupRepository.h"
 #include "db/QueryRepository.h"
 #include "procedures/ProcedureCatalog.h"
 #include "procedures/ProcedureFormBuilder.h"
@@ -13,6 +15,7 @@ ProceduresHubWidget::ProceduresHubWidget(QueryRepository *repository, UserRole r
     : QWidget(parent)
     , ui(new Ui::ProceduresHubWidget)
     , m_repository(repository)
+    , m_lookups(new LookupRepository(DatabaseManager::instance().connectionName()))
     , m_procedures(ProcedureCatalog::proceduresForRole(role))
 {
     ui->setupUi(this);
@@ -41,6 +44,7 @@ ProceduresHubWidget::ProceduresHubWidget(QueryRepository *repository, UserRole r
 
 ProceduresHubWidget::~ProceduresHubWidget()
 {
+    delete m_lookups;
     delete ui;
 }
 
@@ -55,5 +59,5 @@ void ProceduresHubWidget::onProcedureSelected(int index)
     const ProcedureDefinition &procedure = m_procedures.at(index);
     ui->descriptionLabel->setText(
         QStringLiteral("%1 (%2)").arg(procedure.description, procedure.sqlName));
-    ProcedureFormBuilder::configure(m_formWidget, procedure.id, m_repository, this);
+    ProcedureFormBuilder::configure(m_formWidget, procedure.id, m_repository, m_lookups, this);
 }

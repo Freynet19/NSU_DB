@@ -1,5 +1,7 @@
 #include "widgets/ReportsHubWidget.h"
 
+#include "db/DatabaseManager.h"
+#include "db/LookupRepository.h"
 #include "db/QueryRepository.h"
 #include "reports/ReportCatalog.h"
 #include "reports/ReportFilterBuilder.h"
@@ -13,6 +15,7 @@ ReportsHubWidget::ReportsHubWidget(QueryRepository *repository, UserRole role, Q
     : QWidget(parent)
     , ui(new Ui::ReportsHubWidget)
     , m_repository(repository)
+    , m_lookups(new LookupRepository(DatabaseManager::instance().connectionName()))
     , m_reports(ReportCatalog::reportsForRole(role))
 {
     ui->setupUi(this);
@@ -37,6 +40,7 @@ ReportsHubWidget::ReportsHubWidget(QueryRepository *repository, UserRole role, Q
 
 ReportsHubWidget::~ReportsHubWidget()
 {
+    delete m_lookups;
     delete ui;
 }
 
@@ -52,5 +56,5 @@ void ReportsHubWidget::onReportSelected(int index)
     const ReportDefinition &report = m_reports.at(index);
     ui->descriptionLabel->setText(report.description);
     m_reportWidget->clearResults();
-    ReportFilterBuilder::configure(m_reportWidget, report.id, m_repository);
+    ReportFilterBuilder::configure(m_reportWidget, report.id, m_repository, m_lookups);
 }

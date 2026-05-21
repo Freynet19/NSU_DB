@@ -1,22 +1,20 @@
 #include "reports/ReportFilterBuilder.h"
 
+#include "db/LookupRepository.h"
 #include "db/QueryRepository.h"
 #include "reports/ReportCatalog.h"
 #include "widgets/FilterHelpers.h"
 #include "widgets/ReportTableWidget.h"
 
 #include <QDate>
-#include <QSpinBox>
+#include <QComboBox>
 
 namespace {
 
-QSpinBox *addInstanceFilter(QFormLayout *form, ReportTableWidget *parent)
+QComboBox *addInstanceFilter(QFormLayout *form, ReportTableWidget *parent, LookupRepository *lookups)
 {
-    auto *inst = new QSpinBox(parent);
-    inst->setRange(1, 99999);
-    inst->setValue(1);
-    form->addRow(QObject::tr("ID экземпляра"), inst);
-    return inst;
+    return addRequiredEntityCombo(form, QObject::tr("Экземпляр изделия"), parent,
+                                  lookups->items(LookupKind::ProductInstance));
 }
 
 void applyCountAndList(ReportTableWidget *widget,
@@ -39,7 +37,8 @@ void applyCountAndList(ReportTableWidget *widget,
 
 void ReportFilterBuilder::configure(ReportTableWidget *widget,
                                     ReportId reportId,
-                                    QueryRepository *repository)
+                                    QueryRepository *repository,
+                                    LookupRepository *lookups)
 {
     widget->clearFilters();
 
@@ -47,17 +46,22 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
 
     switch (reportId) {
     case ReportId::ProductTypes: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
+                                           lookups->items(LookupKind::ProductCategory));
         widget->setRunReport([repository, ws, cat](QString *err) {
-            return repository->query1ProductTypes(optionalSpinValue(ws), optionalSpinValue(cat), err);
+            return repository->query1ProductTypes(optionalComboValue(ws), optionalComboValue(cat), err);
         });
         break;
     }
     case ReportId::FinishedInPeriod: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        auto *sec = addOptionalIntFilter(form, QObject::tr("Участок"), widget);
-        auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
+        auto *sec = addOptionalEntityCombo(form, QObject::tr("Участок"), widget,
+                                           lookups->items(LookupKind::Section));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
+                                           lookups->items(LookupKind::ProductCategory));
         auto *from = addDateFilter(form, QObject::tr("С"), QDate(2020, 1, 1), widget);
         auto *to = addDateFilter(form, QObject::tr("По"), QDate::currentDate(), widget);
         applyCountAndList(
@@ -65,141 +69,162 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
             reportId,
             repository,
             [repository, ws, sec, cat, from, to](QString *err) {
-                return repository->query2ProductList(optionalSpinValue(ws), optionalSpinValue(sec),
-                                                     optionalSpinValue(cat), from->date(),
+                return repository->query2ProductList(optionalComboValue(ws), optionalComboValue(sec),
+                                                     optionalComboValue(cat), from->date(),
                                                      to->date(), err);
             },
             [repository, ws, sec, cat, from, to](QString *err) {
-                return repository->query2ProductCount(optionalSpinValue(ws), optionalSpinValue(sec),
-                                                      optionalSpinValue(cat), from->date(),
+                return repository->query2ProductCount(optionalComboValue(ws), optionalComboValue(sec),
+                                                      optionalComboValue(cat), from->date(),
                                                       to->date(), err);
             });
         break;
     }
     case ReportId::Personnel: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        auto *sec = addOptionalIntFilter(form, QObject::tr("Участок"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
+        auto *sec = addOptionalEntityCombo(form, QObject::tr("Участок"), widget,
+                                           lookups->items(LookupKind::Section));
         auto *type = addPersonnelTypeFilter(form, widget);
         widget->setRunReport([repository, ws, sec, type](QString *err) {
-            return repository->query3Personnel(optionalSpinValue(ws), optionalSpinValue(sec),
+            return repository->query3Personnel(optionalComboValue(ws), optionalComboValue(sec),
                                                type->currentData().toString(), err);
         });
         break;
     }
     case ReportId::Sections: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
         applyCountAndList(
             widget,
             reportId,
             repository,
             [repository, ws](QString *err) {
-                return repository->query4SectionList(optionalSpinValue(ws), err);
+                return repository->query4SectionList(optionalComboValue(ws), err);
             },
             [repository, ws](QString *err) {
-                return repository->query4SectionCount(optionalSpinValue(ws), err);
+                return repository->query4SectionCount(optionalComboValue(ws), err);
             });
         break;
     }
     case ReportId::ProductWorks: {
-        auto *inst = addInstanceFilter(form, widget);
+        auto *inst = addInstanceFilter(form, widget, lookups);
         widget->setRunReport([repository, inst](QString *err) {
-            return repository->query5ProductWorks(inst->value(), err);
+            return repository->query5ProductWorks(requiredComboValue(inst), err);
         });
         break;
     }
     case ReportId::BrigadeComposition: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        auto *sec = addOptionalIntFilter(form, QObject::tr("Участок"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
+        auto *sec = addOptionalEntityCombo(form, QObject::tr("Участок"), widget,
+                                           lookups->items(LookupKind::Section));
         widget->setRunReport([repository, ws, sec](QString *err) {
-            return repository->query6BrigadeComposition(optionalSpinValue(ws), optionalSpinValue(sec),
+            return repository->query6BrigadeComposition(optionalComboValue(ws), optionalComboValue(sec),
                                                         err);
         });
         break;
     }
     case ReportId::SectionMasters: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        auto *sec = addOptionalIntFilter(form, QObject::tr("Участок"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
+        auto *sec = addOptionalEntityCombo(form, QObject::tr("Участок"), widget,
+                                           lookups->items(LookupKind::Section));
         widget->setRunReport([repository, ws, sec](QString *err) {
-            return repository->query7SectionMasters(optionalSpinValue(ws), optionalSpinValue(sec), err);
+            return repository->query7SectionMasters(optionalComboValue(ws), optionalComboValue(sec), err);
         });
         break;
     }
     case ReportId::CurrentAssembling: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        auto *sec = addOptionalIntFilter(form, QObject::tr("Участок"), widget);
-        auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
+        auto *sec = addOptionalEntityCombo(form, QObject::tr("Участок"), widget,
+                                           lookups->items(LookupKind::Section));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
+                                           lookups->items(LookupKind::ProductCategory));
         widget->setRunReport([repository, ws, sec, cat](QString *err) {
-            return repository->query8CurrentProducts(optionalSpinValue(ws), optionalSpinValue(sec),
-                                                     optionalSpinValue(cat), err);
+            return repository->query8CurrentProducts(optionalComboValue(ws), optionalComboValue(sec),
+                                                     optionalComboValue(cat), err);
         });
         break;
     }
     case ReportId::ProductBrigades: {
-        auto *inst = addInstanceFilter(form, widget);
+        auto *inst = addInstanceFilter(form, widget, lookups);
         widget->setRunReport([repository, inst](QString *err) {
-            return repository->query9ProductBrigades(inst->value(), err);
+            return repository->query9ProductBrigades(requiredComboValue(inst), err);
         });
         break;
     }
     case ReportId::ProductLaboratories: {
-        auto *inst = addInstanceFilter(form, widget);
+        auto *inst = addInstanceFilter(form, widget, lookups);
         widget->setRunReport([repository, inst](QString *err) {
-            return repository->query10ProductLaboratories(inst->value(), err);
+            return repository->query10ProductLaboratories(requiredComboValue(inst), err);
         });
         break;
     }
     case ReportId::TestedInLab: {
-        auto *lab = addOptionalIntFilter(form, QObject::tr("Лаборатория"), widget);
-        auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
+        auto *lab = addOptionalEntityCombo(form, QObject::tr("Лаборатория"), widget,
+                                           lookups->items(LookupKind::Laboratory));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
+                                           lookups->items(LookupKind::ProductCategory));
         auto *from = addDateFilter(form, QObject::tr("С"), QDate(2020, 1, 1), widget);
         auto *to = addDateFilter(form, QObject::tr("По"), QDate::currentDate(), widget);
         widget->setRunReport([repository, lab, cat, from, to](QString *err) {
-            return repository->query11TestedProducts(optionalSpinValue(lab), optionalSpinValue(cat),
+            return repository->query11TestedProducts(optionalComboValue(lab), optionalComboValue(cat),
                                                      from->date(), to->date(), err);
         });
         break;
     }
     case ReportId::TestSpecialists: {
-        auto *lab = addOptionalIntFilter(form, QObject::tr("Лаборатория"), widget);
+        auto *lab = addOptionalEntityCombo(form, QObject::tr("Лаборатория"), widget,
+                                           lookups->items(LookupKind::Laboratory));
         auto *from = addDateFilter(form, QObject::tr("С"), QDate(2020, 1, 1), widget);
         auto *to = addDateFilter(form, QObject::tr("По"), QDate::currentDate(), widget);
-        auto *inst = addOptionalIntFilter(form, QObject::tr("ID экземпляра"), widget);
-        auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
+        auto *inst = addOptionalEntityCombo(form, QObject::tr("Экземпляр изделия"), widget,
+                                            lookups->items(LookupKind::ProductInstance));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
+                                           lookups->items(LookupKind::ProductCategory));
         widget->setRunReport([repository, lab, from, to, inst, cat](QString *err) {
-            return repository->query12TestSpecialists(optionalSpinValue(lab), from->date(),
-                                                      to->date(), optionalSpinValue(inst),
-                                                      optionalSpinValue(cat), err);
+            return repository->query12TestSpecialists(optionalComboValue(lab), from->date(),
+                                                      to->date(), optionalComboValue(inst),
+                                                      optionalComboValue(cat), err);
         });
         break;
     }
     case ReportId::TestEquipment: {
-        auto *lab = addOptionalIntFilter(form, QObject::tr("Лаборатория"), widget);
+        auto *lab = addOptionalEntityCombo(form, QObject::tr("Лаборатория"), widget,
+                                           lookups->items(LookupKind::Laboratory));
         auto *from = addDateFilter(form, QObject::tr("С"), QDate(2020, 1, 1), widget);
         auto *to = addDateFilter(form, QObject::tr("По"), QDate::currentDate(), widget);
-        auto *inst = addOptionalIntFilter(form, QObject::tr("ID экземпляра"), widget);
-        auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
+        auto *inst = addOptionalEntityCombo(form, QObject::tr("Экземпляр изделия"), widget,
+                                            lookups->items(LookupKind::ProductInstance));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
+                                           lookups->items(LookupKind::ProductCategory));
         widget->setRunReport([repository, lab, from, to, inst, cat](QString *err) {
-            return repository->query13TestEquipment(optionalSpinValue(lab), from->date(),
-                                                      to->date(), optionalSpinValue(inst),
-                                                      optionalSpinValue(cat), err);
+            return repository->query13TestEquipment(optionalComboValue(lab), from->date(),
+                                                    to->date(), optionalComboValue(inst),
+                                                    optionalComboValue(cat), err);
         });
         break;
     }
     case ReportId::CurrentList: {
-        auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        auto *sec = addOptionalIntFilter(form, QObject::tr("Участок"), widget);
-        auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
+        auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
+                                          lookups->items(LookupKind::Workshop));
+        auto *sec = addOptionalEntityCombo(form, QObject::tr("Участок"), widget,
+                                           lookups->items(LookupKind::Section));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
+                                           lookups->items(LookupKind::ProductCategory));
         applyCountAndList(
             widget,
             reportId,
             repository,
             [repository, ws, sec, cat](QString *err) {
-                return repository->query14CurrentList(optionalSpinValue(ws), optionalSpinValue(sec),
-                                                      optionalSpinValue(cat), err);
+                return repository->query14CurrentList(optionalComboValue(ws), optionalComboValue(sec),
+                                                      optionalComboValue(cat), err);
             },
             [repository, ws, sec, cat](QString *err) {
-                return repository->query14CurrentCount(optionalSpinValue(ws), optionalSpinValue(sec),
-                                                       optionalSpinValue(cat), err);
+                return repository->query14CurrentCount(optionalComboValue(ws), optionalComboValue(sec),
+                                                       optionalComboValue(cat), err);
             });
         break;
     }

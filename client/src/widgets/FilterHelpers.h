@@ -1,11 +1,14 @@
 #pragma once
 
+#include "db/LookupItem.h"
+
 #include <optional>
 
 #include <QComboBox>
 #include <QDateEdit>
 #include <QFormLayout>
 #include <QLayoutItem>
+#include <QList>
 #include <QSpinBox>
 
 inline void clearFormLayout(QFormLayout *form)
@@ -28,6 +31,67 @@ inline void clearFormLayout(QFormLayout *form)
             delete row.fieldItem;
         }
     }
+}
+
+inline void fillEntityCombo(QComboBox *combo, const QList<LookupItem> &items, bool includeAll)
+{
+    combo->clear();
+    if (includeAll) {
+        combo->addItem(QObject::tr("Все"), QVariant());
+    }
+    for (const LookupItem &item : items) {
+        combo->addItem(item.label, lookupItemData(item.id));
+    }
+    if (combo->count() > 0) {
+        combo->setCurrentIndex(0);
+    }
+}
+
+inline QComboBox *addOptionalEntityCombo(QFormLayout *form,
+                                         const QString &label,
+                                         QWidget *parent,
+                                         const QList<LookupItem> &items)
+{
+    auto *combo = new QComboBox(parent);
+    fillEntityCombo(combo, items, true);
+    form->addRow(label, combo);
+    return combo;
+}
+
+inline QComboBox *addRequiredEntityCombo(QFormLayout *form,
+                                         const QString &label,
+                                         QWidget *parent,
+                                         const QList<LookupItem> &items)
+{
+    auto *combo = new QComboBox(parent);
+    fillEntityCombo(combo, items, false);
+    form->addRow(label, combo);
+    return combo;
+}
+
+inline std::optional<int> optionalComboValue(const QComboBox *combo)
+{
+    if (!combo || combo->currentIndex() < 0) {
+        return std::nullopt;
+    }
+    const QVariant data = combo->currentData();
+    if (!data.isValid()) {
+        return std::nullopt;
+    }
+    bool ok = false;
+    const int value = data.toInt(&ok);
+    if (!ok) {
+        return std::nullopt;
+    }
+    return value;
+}
+
+inline int requiredComboValue(const QComboBox *combo)
+{
+    if (const std::optional<int> value = optionalComboValue(combo)) {
+        return *value;
+    }
+    return 0;
 }
 
 inline QSpinBox *addOptionalIntFilter(QFormLayout *form, const QString &label, QWidget *parent)

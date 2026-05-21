@@ -15,6 +15,7 @@ qt_add_executable(automotive_erp_client
     src/core/UserRole.cpp
     src/db/DatabaseManager.cpp
     src/db/QueryRepository.cpp
+    src/db/LookupRepository.cpp
     src/reports/ReportCatalog.cpp
     src/reports/ReportFilterBuilder.cpp
     src/procedures/ProcedureCatalog.cpp

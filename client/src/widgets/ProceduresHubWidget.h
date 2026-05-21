@@ -6,6 +6,7 @@
 #include <QList>
 #include <QWidget>
 
+class LookupRepository;
 class QueryRepository;
 
 namespace Ui {
@@ -25,6 +26,7 @@ private:
 
     Ui::ProceduresHubWidget *ui = nullptr;
     QueryRepository *m_repository = nullptr;
+    LookupRepository *m_lookups = nullptr;
     QList<ProcedureDefinition> m_procedures;
     class ProcedureFormWidget *m_formWidget = nullptr;
 };

@@ -2,6 +2,7 @@
 
 #include "procedures/ProcedureCatalog.h"
 
+class LookupRepository;
 class ProcedureFormWidget;
 class QueryRepository;
 class QWidget;
@@ -12,5 +13,6 @@ public:
     static void configure(ProcedureFormWidget *widget,
                           ProcedureId procedureId,
                           QueryRepository *repository,
+                          LookupRepository *lookups,
                           QWidget *messageParent);
 };
