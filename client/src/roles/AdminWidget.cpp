@@ -50,6 +50,9 @@ AdminWidget::AdminWidget(QWidget *parent)
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(m_tabs);
 
+    m_tabs->addTab(buildProceduresTab(), tr("Процедуры"));
+    m_tabs->addTab(buildReportsTab(), tr("Отчёты"));
+
     const QStringList tables = {
         QStringLiteral("workshop"),
         QStringLiteral("section"),
@@ -76,9 +79,6 @@ AdminWidget::AdminWidget(QWidget *parent)
     for (const QString &table : tables) {
         m_tabs->addTab(new TableCrudWidget(table, {}, this), tableDisplayName(table));
     }
-
-    m_tabs->addTab(buildProceduresTab(), tr("Процедуры"));
-    m_tabs->addTab(buildReportsTab(), tr("Отчёты"));
 }
 
 QWidget *AdminWidget::buildProceduresTab()
