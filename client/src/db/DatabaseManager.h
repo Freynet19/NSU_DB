@@ -27,6 +27,8 @@ public:
     bool commit(QString *errorMessage = nullptr);
     bool rollback(QString *errorMessage = nullptr);
 
+    static QString formatConnectionError(const QString &rawError, const QString &username = {});
+
 private:
     DatabaseManager() = default;
     bool loadPrepareStatements(QString *errorMessage);

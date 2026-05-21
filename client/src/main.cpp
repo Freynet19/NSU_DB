@@ -21,19 +21,8 @@ int main(int argc, char *argv[])
     }
 
     LoginDialog login;
-    if (login.exec() != QDialog::Accepted) {
+    if (login.exec() != QDialog::Accepted || !DatabaseManager::instance().isConnected()) {
         return 0;
-    }
-
-    QString error;
-    if (!DatabaseManager::instance().connect(login.host(),
-                                             login.port(),
-                                             login.database(),
-                                             login.username(),
-                                             login.password(),
-                                             &error)) {
-        QMessageBox::critical(nullptr, QObject::tr("Подключение"), error);
-        return 1;
     }
 
     MainWindow window(DatabaseManager::instance().role());

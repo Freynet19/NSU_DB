@@ -1,8 +1,11 @@
 #include "auth/LoginDialog.h"
 
+#include "db/DatabaseManager.h"
+
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QLabel>
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QVBoxLayout>
@@ -11,7 +14,7 @@ LoginDialog::LoginDialog(QWidget *parent)
     : QDialog(parent)
 {
     setWindowTitle(tr("Вход в систему"));
-    resize(420, 260);
+    resize(420, 280);
 
     auto *layout = new QVBoxLayout(this);
     auto *form = new QFormLayout;
@@ -38,22 +41,69 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     layout->addLayout(form);
 
+    m_errorLabel = new QLabel(this);
+    m_errorLabel->setWordWrap(true);
+    m_errorLabel->setStyleSheet(QStringLiteral("color: #c0392b;"));
+    m_errorLabel->hide();
+    layout->addWidget(m_errorLabel);
+
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
     layout->addWidget(buttons);
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::accepted, this, &LoginDialog::onLoginAttempt);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     connect(m_userCombo, &QComboBox::currentIndexChanged, this, [this]() {
-        const QString user = m_userCombo->currentData().toString();
-        if (user == QLatin1String("user_admin")) {
-            m_passwordEdit->setText(QStringLiteral("admin_password"));
-        } else if (user == QLatin1String("user_hr")) {
-            m_passwordEdit->setText(QStringLiteral("hr_password"));
-        } else {
-            m_passwordEdit->setText(QStringLiteral("production_password"));
-        }
+        applyPresetPassword();
+        m_errorLabel->hide();
     });
+    connect(m_passwordEdit, &QLineEdit::textChanged, this, [this]() { m_errorLabel->hide(); });
+
     m_userCombo->setCurrentIndex(0);
+    applyPresetPassword();
+}
+
+void LoginDialog::setConnectionError(const QString &message)
+{
+    if (message.isEmpty()) {
+        m_errorLabel->hide();
+        m_errorLabel->clear();
+        return;
+    }
+
+    m_errorLabel->setText(message);
+    m_errorLabel->show();
+}
+
+void LoginDialog::onLoginAttempt()
+{
+    m_errorLabel->hide();
+
+    QString error;
+    if (!DatabaseManager::instance().connect(host(),
+                                             port(),
+                                             database(),
+                                             username(),
+                                             password(),
+                                             &error)) {
+        setConnectionError(error);
+        m_passwordEdit->setFocus();
+        m_passwordEdit->selectAll();
+        return;
+    }
+
+    accept();
+}
+
+void LoginDialog::applyPresetPassword()
+{
+    const QString user = m_userCombo->currentData().toString();
+    if (user == QLatin1String("user_admin")) {
+        m_passwordEdit->setText(QStringLiteral("admin_password"));
+    } else if (user == QLatin1String("user_hr")) {
+        m_passwordEdit->setText(QStringLiteral("hr_password"));
+    } else {
+        m_passwordEdit->setText(QStringLiteral("production_password"));
+    }
 }
 
 QString LoginDialog::host() const

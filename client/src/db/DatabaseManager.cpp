@@ -12,6 +12,47 @@ DatabaseManager &DatabaseManager::instance()
     return manager;
 }
 
+QString DatabaseManager::formatConnectionError(const QString &rawError, const QString &username)
+{
+    const QString text = rawError.toLower();
+
+    if (text.contains(QStringLiteral("password authentication failed"))
+        || text.contains(QStringLiteral("неверный пароль"))) {
+        if (username.isEmpty()) {
+            return QStringLiteral("Неверный пароль.");
+        }
+        return QStringLiteral("Неверный пароль для пользователя «%1».").arg(username);
+    }
+
+    if (text.contains(QStringLiteral("no password supplied"))) {
+        return QStringLiteral("Введите пароль.");
+    }
+
+    if (text.contains(QStringLiteral("connection refused"))
+        || text.contains(QStringLiteral("could not connect to server"))) {
+        return QStringLiteral(
+            "Не удалось подключиться к серверу. Проверьте хост, порт и запуск PostgreSQL (docker compose up -d).");
+    }
+
+    if (text.contains(QStringLiteral("timeout")) || text.contains(QStringLiteral("timed out"))) {
+        return QStringLiteral("Истекло время ожидания подключения к серверу.");
+    }
+
+    if (text.contains(QStringLiteral("database")) && text.contains(QStringLiteral("does not exist"))) {
+        return QStringLiteral("База данных не найдена. Проверьте имя базы (по умолчанию: test).");
+    }
+
+    if (text.contains(QStringLiteral("role")) && text.contains(QStringLiteral("does not exist"))) {
+        return QStringLiteral("Пользователь не найден в базе данных.");
+    }
+
+    if (rawError.isEmpty()) {
+        return QStringLiteral("Не удалось подключиться к базе данных.");
+    }
+
+    return rawError;
+}
+
 bool DatabaseManager::connect(const QString &host,
                               int port,
                               const QString &database,
@@ -31,7 +72,8 @@ bool DatabaseManager::connect(const QString &host,
 
     if (!m_db.open()) {
         if (errorMessage) {
-            *errorMessage = m_db.lastError().text();
+            *errorMessage =
+                formatConnectionError(m_db.lastError().text(), username);
         }
         QSqlDatabase::removeDatabase(connectionName);
         m_db = QSqlDatabase();
