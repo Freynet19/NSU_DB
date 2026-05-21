@@ -35,4 +35,6 @@ public:
     static const ReportDefinition &definition(ReportId id);
     static QList<ReportDefinition> reportsForRole(UserRole role);
     static QString listItemTitle(const ReportDefinition &report);
+    static bool hasCountQuery(ReportId id);
+    static QString countSummaryLabel(ReportId id);
 };

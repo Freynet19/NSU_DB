@@ -103,3 +103,23 @@ QString ReportCatalog::listItemTitle(const ReportDefinition &report)
 {
     return QStringLiteral("%1. %2").arg(static_cast<int>(report.id)).arg(report.shortTitle);
 }
+
+bool ReportCatalog::hasCountQuery(ReportId id)
+{
+    return id == ReportId::FinishedInPeriod || id == ReportId::Sections
+           || id == ReportId::CurrentList;
+}
+
+QString ReportCatalog::countSummaryLabel(ReportId id)
+{
+    switch (id) {
+    case ReportId::FinishedInPeriod:
+        return QObject::tr("Количество собранных изделий");
+    case ReportId::Sections:
+        return QObject::tr("Количество участков");
+    case ReportId::CurrentList:
+        return QObject::tr("Количество собираемых изделий");
+    default:
+        return QObject::tr("Количество");
+    }
+}

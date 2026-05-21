@@ -1,6 +1,7 @@
 #include "reports/ReportFilterBuilder.h"
 
 #include "db/QueryRepository.h"
+#include "reports/ReportCatalog.h"
 #include "widgets/FilterHelpers.h"
 #include "widgets/ReportTableWidget.h"
 
@@ -16,6 +17,22 @@ QSpinBox *addInstanceFilter(QFormLayout *form, ReportTableWidget *parent)
     inst->setValue(1);
     form->addRow(QObject::tr("ID экземпляра"), inst);
     return inst;
+}
+
+void applyCountAndList(ReportTableWidget *widget,
+                       ReportId reportId,
+                       QueryRepository *repository,
+                       ReportTableWidget::RunReportFn listFn,
+                       ReportTableWidget::RunReportFn countFn)
+{
+    widget->setRunReport(std::move(listFn));
+    if (ReportCatalog::hasCountQuery(reportId)) {
+        widget->setCountCaption(ReportCatalog::countSummaryLabel(reportId));
+        widget->setRunCount(std::move(countFn));
+    } else {
+        widget->setRunCount({});
+        widget->setCountCaption({});
+    }
 }
 
 } // namespace
@@ -43,11 +60,20 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
         auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
         auto *from = addDateFilter(form, QObject::tr("С"), QDate(2020, 1, 1), widget);
         auto *to = addDateFilter(form, QObject::tr("По"), QDate::currentDate(), widget);
-        widget->setRunReport([repository, ws, sec, cat, from, to](QString *err) {
-            return repository->query2ProductList(optionalSpinValue(ws), optionalSpinValue(sec),
-                                                 optionalSpinValue(cat), from->date(), to->date(),
-                                                 err);
-        });
+        applyCountAndList(
+            widget,
+            reportId,
+            repository,
+            [repository, ws, sec, cat, from, to](QString *err) {
+                return repository->query2ProductList(optionalSpinValue(ws), optionalSpinValue(sec),
+                                                     optionalSpinValue(cat), from->date(),
+                                                     to->date(), err);
+            },
+            [repository, ws, sec, cat, from, to](QString *err) {
+                return repository->query2ProductCount(optionalSpinValue(ws), optionalSpinValue(sec),
+                                                      optionalSpinValue(cat), from->date(),
+                                                      to->date(), err);
+            });
         break;
     }
     case ReportId::Personnel: {
@@ -62,9 +88,16 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
     }
     case ReportId::Sections: {
         auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
-        widget->setRunReport([repository, ws](QString *err) {
-            return repository->query4SectionList(optionalSpinValue(ws), err);
-        });
+        applyCountAndList(
+            widget,
+            reportId,
+            repository,
+            [repository, ws](QString *err) {
+                return repository->query4SectionList(optionalSpinValue(ws), err);
+            },
+            [repository, ws](QString *err) {
+                return repository->query4SectionCount(optionalSpinValue(ws), err);
+            });
         break;
     }
     case ReportId::ProductWorks: {
@@ -156,10 +189,18 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
         auto *ws = addOptionalIntFilter(form, QObject::tr("Цех"), widget);
         auto *sec = addOptionalIntFilter(form, QObject::tr("Участок"), widget);
         auto *cat = addOptionalIntFilter(form, QObject::tr("Категория"), widget);
-        widget->setRunReport([repository, ws, sec, cat](QString *err) {
-            return repository->query14CurrentList(optionalSpinValue(ws), optionalSpinValue(sec),
-                                                  optionalSpinValue(cat), err);
-        });
+        applyCountAndList(
+            widget,
+            reportId,
+            repository,
+            [repository, ws, sec, cat](QString *err) {
+                return repository->query14CurrentList(optionalSpinValue(ws), optionalSpinValue(sec),
+                                                      optionalSpinValue(cat), err);
+            },
+            [repository, ws, sec, cat](QString *err) {
+                return repository->query14CurrentCount(optionalSpinValue(ws), optionalSpinValue(sec),
+                                                       optionalSpinValue(cat), err);
+            });
         break;
     }
     }
