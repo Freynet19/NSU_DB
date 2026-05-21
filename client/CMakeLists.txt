@@ -15,17 +15,31 @@ qt_add_executable(automotive_erp_client
     src/core/UserRole.cpp
     src/db/DatabaseManager.cpp
     src/db/QueryRepository.cpp
+    src/reports/ReportCatalog.cpp
+    src/reports/ReportFilterBuilder.cpp
     src/auth/LoginDialog.cpp
     src/shell/MainWindow.cpp
     src/widgets/TableCrudWidget.cpp
     src/widgets/ReportTableWidget.cpp
+    src/widgets/ReportsHubWidget.cpp
     src/roles/AdminWidget.cpp
     src/roles/HrWidget.cpp
     src/roles/ProductionReportWidget.cpp
+    ui/LoginDialog.ui
+    ui/MainWindow.ui
+    ui/ReportTableWidget.ui
+    ui/ReportsHubWidget.ui
     resources/app.qrc
 )
 
-target_include_directories(automotive_erp_client PRIVATE src)
+target_include_directories(automotive_erp_client PRIVATE
+    src
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+set_target_properties(automotive_erp_client PROPERTIES
+    AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui"
+)
 
 target_link_libraries(automotive_erp_client PRIVATE Qt6::Widgets Qt6::Sql)
 

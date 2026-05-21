@@ -1,44 +1,50 @@
 #include "widgets/ReportTableWidget.h"
 
-#include <QFormLayout>
+#include "widgets/FilterHelpers.h"
+#include "ui_ReportTableWidget.h"
+
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QSqlQueryModel>
-#include <QTableView>
-#include <QVBoxLayout>
+
+ReportTableWidget::ReportTableWidget(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::ReportTableWidget)
+{
+    ui->setupUi(this);
+    ui->tableView->horizontalHeader()->setStretchLastSection(true);
+    connect(ui->runButton, &QPushButton::clicked, this, &ReportTableWidget::runReport);
+}
 
 ReportTableWidget::~ReportTableWidget()
 {
     if (m_model) {
-        m_view->setModel(nullptr);
+        ui->tableView->setModel(nullptr);
         delete m_model;
         m_model = nullptr;
     }
-}
-
-ReportTableWidget::ReportTableWidget(QWidget *parent)
-    : QWidget(parent)
-{
-    auto *layout = new QVBoxLayout(this);
-
-    m_filters = new QFormLayout;
-    layout->addLayout(m_filters);
-
-    auto *runButton = new QPushButton(tr("Выполнить запрос"), this);
-    layout->addWidget(runButton);
-
-    m_view = new QTableView(this);
-    m_view->setAlternatingRowColors(true);
-    m_view->horizontalHeader()->setStretchLastSection(true);
-    layout->addWidget(m_view);
-
-    connect(runButton, &QPushButton::clicked, this, &ReportTableWidget::runReport);
+    delete ui;
 }
 
 QFormLayout *ReportTableWidget::filterLayout() const
 {
-    return m_filters;
+    return ui->filterLayout;
+}
+
+void ReportTableWidget::clearFilters()
+{
+    clearFormLayout(ui->filterLayout);
+    m_runReport = {};
+}
+
+void ReportTableWidget::clearResults()
+{
+    if (m_model) {
+        ui->tableView->setModel(nullptr);
+        delete m_model;
+        m_model = nullptr;
+    }
 }
 
 void ReportTableWidget::setRunReport(RunReportFn fn)
@@ -53,7 +59,7 @@ void ReportTableWidget::runReport()
     }
 
     if (m_model) {
-        m_view->setModel(nullptr);
+        ui->tableView->setModel(nullptr);
         delete m_model;
         m_model = nullptr;
     }
@@ -65,6 +71,6 @@ void ReportTableWidget::runReport()
         return;
     }
 
-    m_view->setModel(m_model);
-    m_view->resizeColumnsToContents();
+    ui->tableView->setModel(m_model);
+    ui->tableView->resizeColumnsToContents();
 }

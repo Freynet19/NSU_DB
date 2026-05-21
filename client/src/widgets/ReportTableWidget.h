@@ -8,6 +8,10 @@ class QFormLayout;
 class QSqlQueryModel;
 class QTableView;
 
+namespace Ui {
+class ReportTableWidget;
+}
+
 class ReportTableWidget : public QWidget
 {
     Q_OBJECT
@@ -19,12 +23,13 @@ public:
     ~ReportTableWidget() override;
 
     QFormLayout *filterLayout() const;
+    void clearFilters();
+    void clearResults();
     void setRunReport(RunReportFn fn);
     void runReport();
 
 private:
-    QFormLayout *m_filters = nullptr;
-    QTableView *m_view = nullptr;
+    Ui::ReportTableWidget *ui = nullptr;
     QSqlQueryModel *m_model = nullptr;
     RunReportFn m_runReport;
 };

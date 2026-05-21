@@ -2,9 +2,9 @@
 
 #include <QDialog>
 
-class QComboBox;
-class QLineEdit;
-class QSpinBox;
+namespace Ui {
+class LoginDialog;
+}
 
 class LoginDialog : public QDialog
 {
@@ -12,6 +12,7 @@ class LoginDialog : public QDialog
 
 public:
     explicit LoginDialog(QWidget *parent = nullptr);
+    ~LoginDialog() override;
 
     QString host() const;
     int port() const;
@@ -25,10 +26,5 @@ private:
     void onLoginAttempt();
     void applyPresetPassword();
 
-    QLineEdit *m_hostEdit = nullptr;
-    QSpinBox *m_portSpin = nullptr;
-    QLineEdit *m_databaseEdit = nullptr;
-    QComboBox *m_userCombo = nullptr;
-    QLineEdit *m_passwordEdit = nullptr;
-    class QLabel *m_errorLabel = nullptr;
+    Ui::LoginDialog *ui = nullptr;
 };

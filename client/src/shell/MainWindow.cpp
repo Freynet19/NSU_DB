@@ -5,33 +5,35 @@
 #include "roles/AdminWidget.h"
 #include "roles/HrWidget.h"
 #include "roles/ProductionReportWidget.h"
+#include "ui_MainWindow.h"
 
 #include <QLabel>
-#include <QMenuBar>
-#include <QStatusBar>
 #include <QVBoxLayout>
 #include <QWidget>
 
 MainWindow::MainWindow(UserRole role, QWidget *parent)
     : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
 {
+    ui->setupUi(this);
     setWindowTitle(tr("ИС автомобилестроительного предприятия — %1")
                        .arg(userRoleDisplayName(role)));
     resize(1200, 800);
 
-    auto *central = new QWidget(this);
-    auto *layout = new QVBoxLayout(central);
+    ui->userHeader->setText(tr("Пользователь: %1").arg(DatabaseManager::instance().username()));
 
-    auto *header = new QLabel(
-        tr("Пользователь: %1").arg(DatabaseManager::instance().username()), central);
-    layout->addWidget(header);
-    layout->addWidget(createRoleWidget(role), 1);
+    auto *roleLayout = new QVBoxLayout(ui->roleHost);
+    roleLayout->setContentsMargins(0, 0, 0, 0);
+    roleLayout->addWidget(createRoleWidget(role), 1);
 
-    setCentralWidget(central);
     statusBar()->showMessage(userRoleDisplayName(role));
 
-    auto *fileMenu = menuBar()->addMenu(tr("Файл"));
-    fileMenu->addAction(tr("Выход"), this, &QWidget::close);
+    connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
 }
 
 QWidget *MainWindow::createRoleWidget(UserRole role)

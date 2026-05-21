@@ -5,7 +5,21 @@
 #include <QComboBox>
 #include <QDateEdit>
 #include <QFormLayout>
+#include <QLayoutItem>
 #include <QSpinBox>
+
+inline void clearFormLayout(QFormLayout *form)
+{
+    if (!form) {
+        return;
+    }
+    while (QLayoutItem *item = form->takeAt(0)) {
+        if (QWidget *widget = item->widget()) {
+            widget->deleteLater();
+        }
+        delete item;
+    }
+}
 
 inline QSpinBox *addOptionalIntFilter(QFormLayout *form, const QString &label, QWidget *parent)
 {

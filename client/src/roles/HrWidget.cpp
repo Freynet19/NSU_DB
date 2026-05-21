@@ -1,9 +1,10 @@
 #include "roles/HrWidget.h"
 
+#include "core/UserRole.h"
 #include "db/DatabaseManager.h"
 #include "db/QueryRepository.h"
 #include "widgets/FilterHelpers.h"
-#include "widgets/ReportTableWidget.h"
+#include "widgets/ReportsHubWidget.h"
 
 #include <QDateEdit>
 #include <QFormLayout>
@@ -24,7 +25,6 @@ HrWidget::HrWidget(QWidget *parent)
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(tabs);
 
-    // Operations tab
     auto *opsScroll = new QScrollArea(this);
     opsScroll->setWidgetResizable(true);
     auto *ops = new QWidget(opsScroll);
@@ -55,9 +55,9 @@ HrWidget::HrWidget(QWidget *parent)
         form->addRow(tr("Код категории"), cat);
         form->addRow(tr("Специальность"), spec);
         form->addRow(tr("Разряд"), grade);
-        auto *btn = new QPushButton(tr("Принять рабочего (proc_hire_worker)"), w);
+        auto *btn = new QPushButton(tr("Принять рабочего"), w);
         form->addRow(btn);
-        connect(btn, &QPushButton::clicked, w, [=]() {
+        connect(btn, &QPushButton::clicked, w, [this, name, birth, hire, cat, spec, grade, brigade]() {
             QString err;
             if (!m_repo->callProcHireWorker(name->text(), birth->date(), hire->date(), cat->value(),
                                             spec->text(), grade->value(), optionalSpinValue(brigade),
@@ -85,9 +85,9 @@ HrWidget::HrWidget(QWidget *parent)
         form->addRow(tr("Код категории"), cat);
         form->addRow(tr("Должность"), pos);
         form->addRow(tr("Квалификация"), qual);
-        auto *btn = new QPushButton(tr("Принять ИТП (proc_hire_itp)"), w);
+        auto *btn = new QPushButton(tr("Принять ИТП"), w);
         form->addRow(btn);
-        connect(btn, &QPushButton::clicked, w, [=]() {
+        connect(btn, &QPushButton::clicked, w, [this, name, birth, hire, cat, pos, qual]() {
             QString err;
             if (!m_repo->callProcHireItp(name->text(), birth->date(), hire->date(), cat->value(),
                                        pos->text(), qual->text(), &err)) {
@@ -109,9 +109,9 @@ HrWidget::HrWidget(QWidget *parent)
         auto *desc = new QLineEdit(w);
         form->addRow(tr("ID сотрудника"), emp);
         form->addRow(tr("Описание"), desc);
-        auto *btn = new QPushButton(tr("Перевод (proc_transfer_employee)"), w);
+        auto *btn = new QPushButton(tr("Перевести сотрудника"), w);
         form->addRow(btn);
-        connect(btn, &QPushButton::clicked, w, [=]() {
+        connect(btn, &QPushButton::clicked, w, [this, emp, brigade, section, desc]() {
             QString err;
             if (!m_repo->callProcTransferEmployee(emp->value(), optionalSpinValue(brigade),
                                                   optionalSpinValue(section), desc->text(), &err)) {
@@ -131,9 +131,9 @@ HrWidget::HrWidget(QWidget *parent)
         auto *desc = new QLineEdit(w);
         form->addRow(tr("ID сотрудника"), emp);
         form->addRow(tr("Описание"), desc);
-        auto *btn = new QPushButton(tr("Увольнение (proc_dismiss_employee)"), w);
+        auto *btn = new QPushButton(tr("Уволить сотрудника"), w);
         form->addRow(btn);
-        connect(btn, &QPushButton::clicked, w, [=]() {
+        connect(btn, &QPushButton::clicked, w, [this, emp, desc]() {
             QString err;
             if (!m_repo->callProcDismissEmployee(emp->value(), desc->text(), &err)) {
                 QMessageBox::critical(this, tr("Ошибка"), err);
@@ -147,50 +147,5 @@ HrWidget::HrWidget(QWidget *parent)
     opsLayout->addStretch();
     opsScroll->setWidget(ops);
     tabs->addTab(opsScroll, tr("Кадровые операции"));
-
-    // Reports 3,4,6,7 via VIEW / PREPARE
-    auto *reports = new QTabWidget(this);
-
-    {
-        auto *r = new ReportTableWidget(this);
-        auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
-        auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
-        auto *type = addPersonnelTypeFilter(r->filterLayout(), r);
-        r->setRunReport([=](QString *err) {
-            return m_repo->query3Personnel(optionalSpinValue(ws), optionalSpinValue(sec),
-                                           type->currentData().toString(), err);
-        });
-        reports->addTab(r, tr("3"));
-    }
-
-    {
-        auto *r = new ReportTableWidget(this);
-        auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
-        r->setRunReport([=](QString *err) {
-            return m_repo->query4SectionList(optionalSpinValue(ws), err);
-        });
-        reports->addTab(r, tr("4"));
-    }
-
-    {
-        auto *r = new ReportTableWidget(this);
-        auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
-        auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
-        r->setRunReport([=](QString *err) {
-            return m_repo->query6BrigadeComposition(optionalSpinValue(ws), optionalSpinValue(sec), err);
-        });
-        reports->addTab(r, tr("6"));
-    }
-
-    {
-        auto *r = new ReportTableWidget(this);
-        auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
-        auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
-        r->setRunReport([=](QString *err) {
-            return m_repo->query7SectionMasters(optionalSpinValue(ws), optionalSpinValue(sec), err);
-        });
-        reports->addTab(r, tr("7"));
-    }
-
-    tabs->addTab(reports, tr("Отчёты HR"));
+    tabs->addTab(new ReportsHubWidget(m_repo, UserRole::Hr, this), tr("Отчёты"));
 }
