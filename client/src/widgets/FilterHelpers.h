@@ -13,11 +13,20 @@ inline void clearFormLayout(QFormLayout *form)
     if (!form) {
         return;
     }
-    while (QLayoutItem *item = form->takeAt(0)) {
-        if (QWidget *widget = item->widget()) {
-            widget->deleteLater();
+    while (form->rowCount() > 0) {
+        const QFormLayout::TakeRowResult row = form->takeRow(0);
+        if (row.labelItem) {
+            if (QWidget *widget = row.labelItem->widget()) {
+                delete widget;
+            }
+            delete row.labelItem;
         }
-        delete item;
+        if (row.fieldItem) {
+            if (QWidget *widget = row.fieldItem->widget()) {
+                delete widget;
+            }
+            delete row.fieldItem;
+        }
     }
 }
 
