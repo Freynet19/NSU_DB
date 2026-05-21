@@ -1,17 +1,26 @@
 #include "db/QueryRepository.h"
 
+#include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
 
-QueryRepository::QueryRepository(const QSqlDatabase &database)
-    : m_db(database)
+QueryRepository::QueryRepository(const QString &connectionName)
+    : m_connectionName(connectionName)
 {
+}
+
+QSqlDatabase QueryRepository::connection() const
+{
+    if (m_connectionName.isEmpty()) {
+        return QSqlDatabase();
+    }
+    return QSqlDatabase::database(m_connectionName);
 }
 
 bool QueryRepository::execCall(const QString &sql, QString *errorMessage)
 {
-    QSqlQuery query(m_db);
+    QSqlQuery query(connection());
     if (!query.exec(sql)) {
         if (errorMessage) {
             *errorMessage = query.lastError().text();
@@ -76,7 +85,7 @@ QSqlQueryModel *QueryRepository::executePrepared(const QString &statement,
         sql += QLatin1Char('(') + rendered.join(QLatin1String(", ")) + QLatin1Char(')');
     }
 
-    QSqlQuery query(m_db);
+    QSqlQuery query(connection());
     if (!query.exec(sql)) {
         if (errorMessage) {
             *errorMessage = query.lastError().text();
@@ -106,7 +115,7 @@ QSqlQueryModel *QueryRepository::selectView(const QString &viewName,
         sql += QStringLiteral(" WHERE ") + whereClause;
     }
 
-    QSqlQuery query(m_db);
+    QSqlQuery query(connection());
     if (!query.prepare(sql)) {
         if (errorMessage) {
             *errorMessage = query.lastError().text();

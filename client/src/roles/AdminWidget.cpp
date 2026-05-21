@@ -19,7 +19,7 @@
 
 AdminWidget::AdminWidget(QWidget *parent)
     : QWidget(parent)
-    , m_repo(new QueryRepository(DatabaseManager::instance().database()))
+    , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
 {
     m_tabs = new QTabWidget(this);
     auto *layout = new QVBoxLayout(this);

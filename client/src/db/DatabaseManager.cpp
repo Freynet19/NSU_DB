@@ -2,6 +2,7 @@
 
 #include <QFile>
 #include <QRegularExpression>
+#include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QUuid>
@@ -53,6 +54,14 @@ QString DatabaseManager::formatConnectionError(const QString &rawError, const QS
     return rawError;
 }
 
+QSqlDatabase DatabaseManager::connection() const
+{
+    if (m_connectionName.isEmpty()) {
+        return QSqlDatabase();
+    }
+    return QSqlDatabase::database(m_connectionName);
+}
+
 bool DatabaseManager::connect(const QString &host,
                               int port,
                               const QString &database,
@@ -63,23 +72,23 @@ bool DatabaseManager::connect(const QString &host,
     disconnect();
 
     const QString connectionName = QStringLiteral("session_%1").arg(QUuid::createUuid().toString());
-    m_db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), connectionName);
-    m_db.setHostName(host);
-    m_db.setPort(port);
-    m_db.setDatabaseName(database);
-    m_db.setUserName(username);
-    m_db.setPassword(password);
+    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QPSQL"), connectionName);
+    db.setHostName(host);
+    db.setPort(port);
+    db.setDatabaseName(database);
+    db.setUserName(username);
+    db.setPassword(password);
 
-    if (!m_db.open()) {
+    if (!db.open()) {
         if (errorMessage) {
-            *errorMessage =
-                formatConnectionError(m_db.lastError().text(), username);
+            *errorMessage = formatConnectionError(db.lastError().text(), username);
         }
+        db = QSqlDatabase();
         QSqlDatabase::removeDatabase(connectionName);
-        m_db = QSqlDatabase();
         return false;
     }
 
+    m_connectionName = connectionName;
     m_username = username;
     m_role = userRoleFromUsername(username);
 
@@ -93,28 +102,36 @@ bool DatabaseManager::connect(const QString &host,
 
 void DatabaseManager::disconnect()
 {
-    if (!m_db.isValid()) {
+    if (m_connectionName.isEmpty()) {
         return;
     }
 
-    const QString connectionName = m_db.connectionName();
-    if (m_db.isOpen()) {
-        m_db.close();
-    }
-    m_db = QSqlDatabase();
-    QSqlDatabase::removeDatabase(connectionName);
+    const QString connectionName = m_connectionName;
+    m_connectionName.clear();
     m_username.clear();
     m_role = UserRole::Unknown;
+
+    {
+        QSqlDatabase db = QSqlDatabase::database(connectionName);
+        if (db.isValid() && db.isOpen()) {
+            db.close();
+        }
+    }
+
+    QSqlDatabase::removeDatabase(connectionName);
 }
 
 bool DatabaseManager::isConnected() const
 {
-    return m_db.isValid() && m_db.isOpen();
+    if (m_connectionName.isEmpty() || !QSqlDatabase::contains(m_connectionName)) {
+        return false;
+    }
+    return QSqlDatabase::database(m_connectionName).isOpen();
 }
 
-QSqlDatabase DatabaseManager::database() const
+QString DatabaseManager::connectionName() const
 {
-    return m_db;
+    return m_connectionName;
 }
 
 QString DatabaseManager::username() const
@@ -129,7 +146,7 @@ UserRole DatabaseManager::role() const
 
 bool DatabaseManager::beginTransaction(QString *errorMessage)
 {
-    QSqlQuery query(m_db);
+    QSqlQuery query(connection());
     if (!query.exec(QStringLiteral("BEGIN"))) {
         if (errorMessage) {
             *errorMessage = query.lastError().text();
@@ -141,7 +158,7 @@ bool DatabaseManager::beginTransaction(QString *errorMessage)
 
 bool DatabaseManager::commit(QString *errorMessage)
 {
-    QSqlQuery query(m_db);
+    QSqlQuery query(connection());
     if (!query.exec(QStringLiteral("COMMIT"))) {
         if (errorMessage) {
             *errorMessage = query.lastError().text();
@@ -153,7 +170,7 @@ bool DatabaseManager::commit(QString *errorMessage)
 
 bool DatabaseManager::rollback(QString *errorMessage)
 {
-    QSqlQuery query(m_db);
+    QSqlQuery query(connection());
     if (!query.exec(QStringLiteral("ROLLBACK"))) {
         if (errorMessage) {
             *errorMessage = query.lastError().text();
@@ -177,7 +194,7 @@ bool DatabaseManager::loadPrepareStatements(QString *errorMessage)
     const QStringList statements =
         content.split(QRegularExpression(QStringLiteral(";\\s*\\n?")), Qt::SkipEmptyParts);
 
-    QSqlQuery query(m_db);
+    QSqlQuery query(connection());
     for (const QString &rawStatement : statements) {
         const QString statement = rawStatement.trimmed();
         if (statement.isEmpty() || !statement.startsWith(QLatin1String("PREPARE"), Qt::CaseInsensitive)) {

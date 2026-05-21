@@ -11,7 +11,7 @@
 
 ProductionReportWidget::ProductionReportWidget(QWidget *parent)
     : QWidget(parent)
-    , m_repo(new QueryRepository(DatabaseManager::instance().database()))
+    , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
 {
     auto *tabs = new QTabWidget(this);
     auto *layout = new QVBoxLayout(this);

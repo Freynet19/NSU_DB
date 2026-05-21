@@ -6,6 +6,7 @@
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlTableModel>
 #include <QTableView>
@@ -57,7 +58,8 @@ void TableCrudWidget::refresh()
         m_model = nullptr;
     }
 
-    m_model = new QSqlTableModel(this, DatabaseManager::instance().database());
+    const QString connectionName = DatabaseManager::instance().connectionName();
+    m_model = new QSqlTableModel(this, QSqlDatabase::database(connectionName));
     m_model->setTable(m_tableName);
     m_model->setEditStrategy(QSqlTableModel::OnManualSubmit);
 

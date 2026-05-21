@@ -16,6 +16,7 @@ public:
     using RunReportFn = std::function<QSqlQueryModel *(QString *)>;
 
     explicit ReportTableWidget(const QString &title, QWidget *parent = nullptr);
+    ~ReportTableWidget() override;
 
     QFormLayout *filterLayout() const;
     void setRunReport(RunReportFn fn);

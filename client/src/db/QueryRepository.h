@@ -10,7 +10,7 @@
 class QueryRepository
 {
 public:
-    explicit QueryRepository(const QSqlDatabase &database);
+    explicit QueryRepository(const QString &connectionName);
 
     bool callProcHireWorker(const QString &fullName,
                             const QDate &birthDate,
@@ -149,6 +149,7 @@ private:
     bool execCall(const QString &sql, QString *errorMessage);
     QString sqlLiteral(const QVariant &value) const;
     QSqlQueryModel *runSelectQuery(QSqlQuery &query, QString *errorMessage);
+    QSqlDatabase connection() const;
 
-    QSqlDatabase m_db;
+    QString m_connectionName;
 };

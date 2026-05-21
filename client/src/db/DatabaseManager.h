@@ -2,8 +2,9 @@
 
 #include "core/UserRole.h"
 
-#include <QSqlDatabase>
 #include <QString>
+
+class QSqlDatabase;
 
 class DatabaseManager
 {
@@ -19,7 +20,7 @@ public:
 
     void disconnect();
     bool isConnected() const;
-    QSqlDatabase database() const;
+    QString connectionName() const;
     QString username() const;
     UserRole role() const;
 
@@ -31,9 +32,10 @@ public:
 
 private:
     DatabaseManager() = default;
+    QSqlDatabase connection() const;
     bool loadPrepareStatements(QString *errorMessage);
 
-    QSqlDatabase m_db;
+    QString m_connectionName;
     QString m_username;
     UserRole m_role = UserRole::Unknown;
 };

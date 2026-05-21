@@ -25,10 +25,12 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    MainWindow window(DatabaseManager::instance().role());
-    window.show();
-
-    const int code = app.exec();
+    int code = 0;
+    {
+        MainWindow window(DatabaseManager::instance().role());
+        window.show();
+        code = app.exec();
+    }
     DatabaseManager::instance().disconnect();
     return code;
 }

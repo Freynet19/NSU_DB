@@ -8,6 +8,15 @@
 #include <QTableView>
 #include <QVBoxLayout>
 
+ReportTableWidget::~ReportTableWidget()
+{
+    if (m_model) {
+        m_view->setModel(nullptr);
+        delete m_model;
+        m_model = nullptr;
+    }
+}
+
 ReportTableWidget::ReportTableWidget(const QString &title, QWidget *parent)
     : QWidget(parent)
     , m_title(title)
