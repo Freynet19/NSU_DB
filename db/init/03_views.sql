@@ -1,6 +1,5 @@
 -- перечень типов изделий с указанием их категории и цеха-изготовителя
-CREATE
-OR REPLACE VIEW vw_product_types AS
+CREATE OR REPLACE VIEW vw_product_types AS
 SELECT DISTINCT pt.type_id,
                 pt.model_name,
                 pcat.category_id,
@@ -12,8 +11,7 @@ FROM product_type pt
          JOIN workshop w USING (workshop_id)
          JOIN product_instance pi USING (type_id);
 -- сведения об изделиях, завершивших сборку, находящихся на испытании или уже выпущенных
-CREATE
-OR REPLACE VIEW vw_finished_products AS
+CREATE OR REPLACE VIEW vw_finished_products AS
 SELECT DISTINCT pi.instance_id,
                 pt.type_id,
                 pt.model_name,
@@ -30,8 +28,7 @@ FROM product_instance pi
          JOIN workshop w USING (workshop_id)
 WHERE pi.status IN ('assembled', 'testing', 'released');
 -- обобщённые сведения о персонале предприятия, включая ИТР и рабочих, с указанием категории, должности, квалификации и места работы
-CREATE
-OR REPLACE VIEW vw_personnel_data AS
+CREATE OR REPLACE VIEW vw_personnel_data AS
 SELECT q.personnel_type,
        q.employee_id,
        q.full_name,
@@ -65,17 +62,18 @@ FROM (SELECT DISTINCT 'ITP'                             AS personnel_type,
                LEFT JOIN workshop w_head
                          ON w_head.head_id = i.employee_id
       UNION ALL
-      SELECT 'Worker'     AS personnel_type,
+      SELECT 'Worker'              AS personnel_type,
              e.employee_id,
              e.full_name,
              e.birth_date,
              e.hire_date,
              pcat.category_code,
-             pcat.name    AS category_name,
-             wr.specialty AS position_name,
-             wr.grade::VARCHAR(20) AS qualification_or_grade, w.name AS workshop_name,
-             s.name       AS section_name,
-             b.name       AS brigade_name
+             pcat.name             AS category_name,
+             wr.specialty          AS position_name,
+             wr.grade::VARCHAR(20) AS qualification_or_grade,
+             w.name                AS workshop_name,
+             s.name                AS section_name,
+             b.name                AS brigade_name
       FROM employee e
                JOIN worker wr USING (employee_id)
                JOIN personnel_category pcat USING (category_code)
@@ -83,8 +81,7 @@ FROM (SELECT DISTINCT 'ITP'                             AS personnel_type,
                LEFT JOIN section s USING (section_id)
                LEFT JOIN workshop w USING (workshop_id)) AS q;
 -- перечень участков с указанием цеха и сведений о назначенном начальнике участка
-CREATE
-OR REPLACE VIEW vw_sections AS
+CREATE OR REPLACE VIEW vw_sections AS
 SELECT s.section_id,
        s.name          AS section_name,
        w.workshop_id,
@@ -99,8 +96,7 @@ FROM section s
                    ON i.employee_id = s.section_head_id
          LEFT JOIN employee e USING (employee_id);
 -- перечень работ, выполняемых при изготовлении изделия, с указанием этапов производства и ответственных участков
-CREATE
-OR REPLACE VIEW vw_product_works AS
+CREATE OR REPLACE VIEW vw_product_works AS
 SELECT pi.instance_id,
        pt.type_id,
        pt.model_name,
@@ -117,8 +113,7 @@ FROM product_instance pi
          JOIN work_type wt USING (work_type_id)
          JOIN section s USING (section_id);
 -- сведения о составе бригад, включая рабочих, их специальности, разряды и признак бригадира
-CREATE
-OR REPLACE VIEW vw_brigade_composition AS
+CREATE OR REPLACE VIEW vw_brigade_composition AS
 SELECT b.brigade_id,
        b.name  AS brigade_name,
        s.section_id,
@@ -139,8 +134,7 @@ FROM brigade b
          LEFT JOIN worker wr USING (brigade_id)
          LEFT JOIN employee e USING (employee_id);
 -- сведения о мастерах участков с указанием участка и цеха, за которыми они закреплены
-CREATE
-OR REPLACE VIEW vw_section_masters AS
+CREATE OR REPLACE VIEW vw_section_masters AS
 SELECT i.employee_id,
        e.full_name,
        i.position,
@@ -155,8 +149,7 @@ FROM itp i
               ON s.section_id = i.master_section_id
          JOIN workshop w USING (workshop_id);
 -- перечень изделий, находящихся в процессе сборки в текущий момент, с указанием категории, участка, цеха и состояния сборки
-CREATE
-OR REPLACE VIEW vw_current_products AS
+CREATE OR REPLACE VIEW vw_current_products AS
 SELECT DISTINCT pi.instance_id,
                 pt.type_id,
                 pt.model_name,
@@ -180,8 +173,7 @@ FROM product_instance pi
 WHERE pi.status = 'assembling'
   AND ar.status = 'in_progress';
 -- перечень лабораторий, в которых проводились испытания изделий
-CREATE
-OR REPLACE VIEW vw_product_laboratories AS
+CREATE OR REPLACE VIEW vw_product_laboratories AS
 SELECT DISTINCT t.instance_id,
                 l.laboratory_id,
                 l.name AS laboratory_name,
@@ -189,8 +181,7 @@ SELECT DISTINCT t.instance_id,
 FROM test t
          JOIN laboratory l USING (laboratory_id);
 -- сведения об изделиях, проходивших испытания, с указанием лаборатории, даты испытания и категории изделия
-CREATE
-OR REPLACE VIEW vw_tested_products AS
+CREATE OR REPLACE VIEW vw_tested_products AS
 SELECT DISTINCT pi.instance_id,
                 pt.type_id,
                 pt.model_name,
@@ -207,8 +198,7 @@ FROM test t
          JOIN product_type pt USING (type_id)
          JOIN product_category pcat USING (category_id);
 -- сведения о специалистах, участвовавших в проведении испытаний изделий в лабораториях
-CREATE
-OR REPLACE VIEW vw_test_specialists AS
+CREATE OR REPLACE VIEW vw_test_specialists AS
 SELECT DISTINCT i.employee_id,
                 e.full_name,
                 i.position,
@@ -230,8 +220,7 @@ FROM test_specialist ts
          JOIN product_type pt USING (type_id)
          JOIN product_category pcat USING (category_id);
 -- сведения об оборудовании, использовавшемся при проведении испытаний изделий в лабораториях
-CREATE
-OR REPLACE VIEW vw_test_equipment AS
+CREATE OR REPLACE VIEW vw_test_equipment AS
 SELECT DISTINCT e.equipment_id,
                 e.name    AS equipment_name,
                 e.type    AS equipment_type,
