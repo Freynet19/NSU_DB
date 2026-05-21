@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>prepare_statements.sql</file>
+    </qresource>
+</RCC>
