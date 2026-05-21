@@ -288,7 +288,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 1
     {
-        auto *r = new ReportTableWidget(tr("1. Виды изделий"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
         r->setRunReport([=](QString *err) {
@@ -299,7 +299,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 2
     {
-        auto *r = new ReportTableWidget(tr("2. Собранные изделия"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
@@ -314,7 +314,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 3
     {
-        auto *r = new ReportTableWidget(tr("3. Кадровый состав"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *type = addPersonnelTypeFilter(r->filterLayout(), r);
@@ -327,7 +327,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 4
     {
-        auto *r = new ReportTableWidget(tr("4. Участки"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         r->setRunReport([=](QString *err) {
             return m_repo->query4SectionList(optionalSpinValue(ws), err);
@@ -337,7 +337,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 5
     {
-        auto *r = new ReportTableWidget(tr("5. Работы изделия"), this);
+        auto *r = new ReportTableWidget(this);
         auto *inst = new QSpinBox(r);
         inst->setRange(1, 99999);
         inst->setValue(1);
@@ -348,7 +348,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 6
     {
-        auto *r = new ReportTableWidget(tr("6. Состав бригад"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         r->setRunReport([=](QString *err) {
@@ -359,7 +359,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 7
     {
-        auto *r = new ReportTableWidget(tr("7. Мастера"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         r->setRunReport([=](QString *err) {
@@ -370,7 +370,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 8
     {
-        auto *r = new ReportTableWidget(tr("8. Собираемые сейчас"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
@@ -383,7 +383,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 9
     {
-        auto *r = new ReportTableWidget(tr("9. Бригады сборки"), this);
+        auto *r = new ReportTableWidget(this);
         auto *inst = new QSpinBox(r);
         inst->setRange(1, 99999);
         inst->setValue(1);
@@ -394,7 +394,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 10
     {
-        auto *r = new ReportTableWidget(tr("10. Лаборатории изделия"), this);
+        auto *r = new ReportTableWidget(this);
         auto *inst = new QSpinBox(r);
         inst->setRange(1, 99999);
         inst->setValue(1);
@@ -407,7 +407,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 11
     {
-        auto *r = new ReportTableWidget(tr("11. Испытанные в лаборатории"), this);
+        auto *r = new ReportTableWidget(this);
         auto *lab = addOptionalIntFilter(r->filterLayout(), tr("Лаборатория"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
         auto *from = addDateFilter(r->filterLayout(), tr("С"), QDate(2020, 1, 1), r);
@@ -421,7 +421,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 12
     {
-        auto *r = new ReportTableWidget(tr("12. Испытатели"), this);
+        auto *r = new ReportTableWidget(this);
         auto *lab = addOptionalIntFilter(r->filterLayout(), tr("Лаборатория"), r);
         auto *from = addDateFilter(r->filterLayout(), tr("С"), QDate(2020, 1, 1), r);
         auto *to = addDateFilter(r->filterLayout(), tr("По"), QDate::currentDate(), r);
@@ -436,7 +436,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 13
     {
-        auto *r = new ReportTableWidget(tr("13. Оборудование испытаний"), this);
+        auto *r = new ReportTableWidget(this);
         auto *lab = addOptionalIntFilter(r->filterLayout(), tr("Лаборатория"), r);
         auto *from = addDateFilter(r->filterLayout(), tr("С"), QDate(2020, 1, 1), r);
         auto *to = addDateFilter(r->filterLayout(), tr("По"), QDate::currentDate(), r);
@@ -451,7 +451,7 @@ QWidget *AdminWidget::buildReportsTab()
 
     // Query 14
     {
-        auto *r = new ReportTableWidget(tr("14. Собираемые (список)"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);

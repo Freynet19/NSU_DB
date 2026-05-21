@@ -19,7 +19,7 @@ ProductionReportWidget::ProductionReportWidget(QWidget *parent)
 
     // 1 - product types
     {
-        auto *r = new ReportTableWidget(tr("1. Виды изделий"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
         r->setRunReport([=](QString *err) {
@@ -30,7 +30,7 @@ ProductionReportWidget::ProductionReportWidget(QWidget *parent)
 
     // 2 - finished products
     {
-        auto *r = new ReportTableWidget(tr("2. Собранные за период"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
@@ -45,7 +45,7 @@ ProductionReportWidget::ProductionReportWidget(QWidget *parent)
 
     // 8 - current assembling
     {
-        auto *r = new ReportTableWidget(tr("8. Собираемые сейчас"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
@@ -58,7 +58,7 @@ ProductionReportWidget::ProductionReportWidget(QWidget *parent)
 
     // 10 - labs for product
     {
-        auto *r = new ReportTableWidget(tr("10. Лаборатории изделия"), this);
+        auto *r = new ReportTableWidget(this);
         auto *inst = new QSpinBox(r);
         inst->setRange(1, 99999);
         inst->setValue(1);
@@ -71,7 +71,7 @@ ProductionReportWidget::ProductionReportWidget(QWidget *parent)
 
     // 11 - tested in lab
     {
-        auto *r = new ReportTableWidget(tr("11. Испытанные в лаборатории"), this);
+        auto *r = new ReportTableWidget(this);
         auto *lab = addOptionalIntFilter(r->filterLayout(), tr("Лаборатория"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);
         auto *from = addDateFilter(r->filterLayout(), tr("С"), QDate(2020, 1, 1), r);
@@ -85,7 +85,7 @@ ProductionReportWidget::ProductionReportWidget(QWidget *parent)
 
     // 14 - current count + list
     {
-        auto *r = new ReportTableWidget(tr("14. Собираемые (список)"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *cat = addOptionalIntFilter(r->filterLayout(), tr("Категория"), r);

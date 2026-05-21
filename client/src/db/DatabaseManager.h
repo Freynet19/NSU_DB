@@ -24,10 +24,6 @@ public:
     QString username() const;
     UserRole role() const;
 
-    bool beginTransaction(QString *errorMessage = nullptr);
-    bool commit(QString *errorMessage = nullptr);
-    bool rollback(QString *errorMessage = nullptr);
-
     static QString formatConnectionError(const QString &rawError, const QString &username = {});
 
 private:

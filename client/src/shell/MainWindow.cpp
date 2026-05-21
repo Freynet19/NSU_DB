@@ -8,7 +8,6 @@
 
 #include <QLabel>
 #include <QMenuBar>
-#include <QMessageBox>
 #include <QStatusBar>
 #include <QVBoxLayout>
 #include <QWidget>

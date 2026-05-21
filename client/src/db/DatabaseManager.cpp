@@ -144,42 +144,6 @@ UserRole DatabaseManager::role() const
     return m_role;
 }
 
-bool DatabaseManager::beginTransaction(QString *errorMessage)
-{
-    QSqlQuery query(connection());
-    if (!query.exec(QStringLiteral("BEGIN"))) {
-        if (errorMessage) {
-            *errorMessage = query.lastError().text();
-        }
-        return false;
-    }
-    return true;
-}
-
-bool DatabaseManager::commit(QString *errorMessage)
-{
-    QSqlQuery query(connection());
-    if (!query.exec(QStringLiteral("COMMIT"))) {
-        if (errorMessage) {
-            *errorMessage = query.lastError().text();
-        }
-        return false;
-    }
-    return true;
-}
-
-bool DatabaseManager::rollback(QString *errorMessage)
-{
-    QSqlQuery query(connection());
-    if (!query.exec(QStringLiteral("ROLLBACK"))) {
-        if (errorMessage) {
-            *errorMessage = query.lastError().text();
-        }
-        return false;
-    }
-    return true;
-}
-
 bool DatabaseManager::loadPrepareStatements(QString *errorMessage)
 {
     QFile file(QStringLiteral(":/prepare_statements.sql"));

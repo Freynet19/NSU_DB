@@ -15,7 +15,7 @@ class ReportTableWidget : public QWidget
 public:
     using RunReportFn = std::function<QSqlQueryModel *(QString *)>;
 
-    explicit ReportTableWidget(const QString &title, QWidget *parent = nullptr);
+    explicit ReportTableWidget(QWidget *parent = nullptr);
     ~ReportTableWidget() override;
 
     QFormLayout *filterLayout() const;
@@ -23,7 +23,6 @@ public:
     void runReport();
 
 private:
-    QString m_title;
     QFormLayout *m_filters = nullptr;
     QTableView *m_view = nullptr;
     QSqlQueryModel *m_model = nullptr;

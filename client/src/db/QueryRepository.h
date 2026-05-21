@@ -4,7 +4,6 @@
 #include <QSqlQueryModel>
 #include <QString>
 #include <QVariant>
-#include <QVariantMap>
 #include <optional>
 
 class QueryRepository
@@ -58,24 +57,8 @@ public:
                               const QString &result,
                               QString *errorMessage = nullptr);
 
-    QSqlQueryModel *selectView(const QString &viewName,
-                               const QString &whereClause = {},
-                               const QVariantMap &bindValues = {},
-                               QString *errorMessage = nullptr);
-
-    QSqlQueryModel *executePrepared(const QString &statement,
-                                    const QVariantList &args,
-                                    QString *errorMessage = nullptr);
-
     QSqlQueryModel *query1ProductTypes(std::optional<int> workshopId,
                                        std::optional<int> categoryId,
-                                       QString *errorMessage = nullptr);
-
-    QSqlQueryModel *query2ProductCount(std::optional<int> workshopId,
-                                       std::optional<int> sectionId,
-                                       std::optional<int> categoryId,
-                                       const QDate &from,
-                                       const QDate &to,
                                        QString *errorMessage = nullptr);
 
     QSqlQueryModel *query2ProductList(std::optional<int> workshopId,
@@ -89,9 +72,6 @@ public:
                                     std::optional<int> sectionId,
                                     const QString &personnelType,
                                     QString *errorMessage = nullptr);
-
-    QSqlQueryModel *query4SectionCount(std::optional<int> workshopId,
-                                       QString *errorMessage = nullptr);
 
     QSqlQueryModel *query4SectionList(std::optional<int> workshopId,
                                       QString *errorMessage = nullptr);
@@ -135,11 +115,6 @@ public:
                                          std::optional<int> categoryId,
                                          QString *errorMessage = nullptr);
 
-    QSqlQueryModel *query14CurrentCount(std::optional<int> workshopId,
-                                        std::optional<int> sectionId,
-                                        std::optional<int> categoryId,
-                                        QString *errorMessage = nullptr);
-
     QSqlQueryModel *query14CurrentList(std::optional<int> workshopId,
                                        std::optional<int> sectionId,
                                        std::optional<int> categoryId,
@@ -147,6 +122,9 @@ public:
 
 private:
     bool execCall(const QString &sql, QString *errorMessage);
+    QSqlQueryModel *executePrepared(const QString &statement,
+                                    const QVariantList &args,
+                                    QString *errorMessage);
     QString sqlLiteral(const QVariant &value) const;
     QSqlQueryModel *runSelectQuery(QSqlQuery &query, QString *errorMessage);
     QSqlDatabase connection() const;

@@ -3,8 +3,6 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QSqlRecord>
-
 QueryRepository::QueryRepository(const QString &connectionName)
     : m_connectionName(connectionName)
 {
@@ -103,31 +101,6 @@ QSqlQueryModel *QueryRepository::executePrepared(const QString &statement,
         return nullptr;
     }
     return model;
-}
-
-QSqlQueryModel *QueryRepository::selectView(const QString &viewName,
-                                            const QString &whereClause,
-                                            const QVariantMap &bindValues,
-                                            QString *errorMessage)
-{
-    QString sql = QStringLiteral("SELECT * FROM %1").arg(viewName);
-    if (!whereClause.isEmpty()) {
-        sql += QStringLiteral(" WHERE ") + whereClause;
-    }
-
-    QSqlQuery query(connection());
-    if (!query.prepare(sql)) {
-        if (errorMessage) {
-            *errorMessage = query.lastError().text();
-        }
-        return nullptr;
-    }
-
-    for (auto it = bindValues.constBegin(); it != bindValues.constEnd(); ++it) {
-        query.bindValue(it.key(), it.value());
-    }
-
-    return runSelectQuery(query, errorMessage);
 }
 
 bool QueryRepository::callProcHireWorker(const QString &fullName,
@@ -253,22 +226,6 @@ QSqlQueryModel *QueryRepository::query1ProductTypes(std::optional<int> workshopI
                            errorMessage);
 }
 
-QSqlQueryModel *QueryRepository::query2ProductCount(std::optional<int> workshopId,
-                                                    std::optional<int> sectionId,
-                                                    std::optional<int> categoryId,
-                                                    const QDate &from,
-                                                    const QDate &to,
-                                                    QString *errorMessage)
-{
-    return executePrepared(QStringLiteral("get_product_count"),
-                           {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant(),
-                            categoryId ? QVariant(*categoryId) : QVariant(),
-                            from,
-                            to},
-                           errorMessage);
-}
-
 QSqlQueryModel *QueryRepository::query2ProductList(std::optional<int> workshopId,
                                                   std::optional<int> sectionId,
                                                   std::optional<int> categoryId,
@@ -298,14 +255,6 @@ QSqlQueryModel *QueryRepository::query3Personnel(std::optional<int> workshopId,
                            {workshopId ? QVariant(*workshopId) : QVariant(),
                             sectionId ? QVariant(*sectionId) : QVariant(),
                             typeArg},
-                           errorMessage);
-}
-
-QSqlQueryModel *QueryRepository::query4SectionCount(std::optional<int> workshopId,
-                                                    QString *errorMessage)
-{
-    return executePrepared(QStringLiteral("get_section_count"),
-                           {workshopId ? QVariant(*workshopId) : QVariant()},
                            errorMessage);
 }
 
@@ -409,18 +358,6 @@ QSqlQueryModel *QueryRepository::query13TestEquipment(std::optional<int> laborat
                             from,
                             to,
                             instanceId ? QVariant(*instanceId) : QVariant(),
-                            categoryId ? QVariant(*categoryId) : QVariant()},
-                           errorMessage);
-}
-
-QSqlQueryModel *QueryRepository::query14CurrentCount(std::optional<int> workshopId,
-                                                     std::optional<int> sectionId,
-                                                     std::optional<int> categoryId,
-                                                     QString *errorMessage)
-{
-    return executePrepared(QStringLiteral("get_current_products_count"),
-                           {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant(),
                             categoryId ? QVariant(*categoryId) : QVariant()},
                            errorMessage);
 }

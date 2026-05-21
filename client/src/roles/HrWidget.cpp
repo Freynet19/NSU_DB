@@ -152,7 +152,7 @@ HrWidget::HrWidget(QWidget *parent)
     auto *reports = new QTabWidget(this);
 
     {
-        auto *r = new ReportTableWidget(tr("3. Кадровый состав"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         auto *type = addPersonnelTypeFilter(r->filterLayout(), r);
@@ -164,7 +164,7 @@ HrWidget::HrWidget(QWidget *parent)
     }
 
     {
-        auto *r = new ReportTableWidget(tr("4. Участки"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         r->setRunReport([=](QString *err) {
             return m_repo->query4SectionList(optionalSpinValue(ws), err);
@@ -173,7 +173,7 @@ HrWidget::HrWidget(QWidget *parent)
     }
 
     {
-        auto *r = new ReportTableWidget(tr("6. Состав бригад"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         r->setRunReport([=](QString *err) {
@@ -183,7 +183,7 @@ HrWidget::HrWidget(QWidget *parent)
     }
 
     {
-        auto *r = new ReportTableWidget(tr("7. Мастера"), this);
+        auto *r = new ReportTableWidget(this);
         auto *ws = addOptionalIntFilter(r->filterLayout(), tr("Цех"), r);
         auto *sec = addOptionalIntFilter(r->filterLayout(), tr("Участок"), r);
         r->setRunReport([=](QString *err) {

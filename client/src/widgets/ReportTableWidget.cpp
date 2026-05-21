@@ -17,9 +17,8 @@ ReportTableWidget::~ReportTableWidget()
     }
 }
 
-ReportTableWidget::ReportTableWidget(const QString &title, QWidget *parent)
+ReportTableWidget::ReportTableWidget(QWidget *parent)
     : QWidget(parent)
-    , m_title(title)
 {
     auto *layout = new QVBoxLayout(this);
 
