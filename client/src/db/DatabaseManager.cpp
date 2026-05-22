@@ -144,6 +144,23 @@ UserRole DatabaseManager::role() const
     return m_role;
 }
 
+namespace {
+
+QString stripLineComments(const QString &sql)
+{
+    QStringList lines;
+    for (const QString &line : sql.split(QLatin1Char('\n'))) {
+        const QString trimmed = line.trimmed();
+        if (trimmed.startsWith(QLatin1String("--"))) {
+            continue;
+        }
+        lines.append(line);
+    }
+    return lines.join(QLatin1Char('\n'));
+}
+
+} // namespace
+
 bool DatabaseManager::loadPrepareStatements(QString *errorMessage)
 {
     QFile file(QStringLiteral(":/prepare_statements.sql"));
@@ -154,16 +171,22 @@ bool DatabaseManager::loadPrepareStatements(QString *errorMessage)
         return false;
     }
 
-    const QString content = QString::fromUtf8(file.readAll());
+    const QString content = stripLineComments(QString::fromUtf8(file.readAll()));
     const QStringList statements =
         content.split(QRegularExpression(QStringLiteral(";\\s*\\n?")), Qt::SkipEmptyParts);
 
     QSqlQuery query(connection());
+    int preparedCount = 0;
     for (const QString &rawStatement : statements) {
-        const QString statement = rawStatement.trimmed();
-        if (statement.isEmpty() || !statement.startsWith(QLatin1String("PREPARE"), Qt::CaseInsensitive)) {
+        QString statement = rawStatement.trimmed();
+        if (statement.isEmpty()) {
             continue;
         }
+        const int preparePos = statement.indexOf(QLatin1String("PREPARE"), 0, Qt::CaseInsensitive);
+        if (preparePos < 0) {
+            continue;
+        }
+        statement = statement.mid(preparePos);
         if (!query.exec(statement)) {
             if (errorMessage) {
                 *errorMessage = QStringLiteral("PREPARE failed: %1\n%2")
@@ -171,6 +194,14 @@ bool DatabaseManager::loadPrepareStatements(QString *errorMessage)
             }
             return false;
         }
+        ++preparedCount;
+    }
+
+    if (preparedCount == 0) {
+        if (errorMessage) {
+            *errorMessage = QStringLiteral("В prepare_statements.sql не найдено ни одного PREPARE");
+        }
+        return false;
     }
 
     return true;

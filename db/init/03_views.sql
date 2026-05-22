@@ -28,7 +28,8 @@ FROM product_instance pi
          JOIN workshop w USING (workshop_id)
 WHERE pi.status IN ('assembled', 'testing', 'released');
 -- обобщённые сведения о персонале предприятия, включая ИТР и рабочих, с указанием категории, должности, квалификации и места работы
-CREATE OR REPLACE VIEW vw_personnel_data AS
+DROP VIEW IF EXISTS vw_personnel_data;
+CREATE VIEW vw_personnel_data AS
 SELECT q.personnel_type,
        q.employee_id,
        q.full_name,
@@ -38,21 +39,25 @@ SELECT q.personnel_type,
        q.category_name,
        q.position_name,
        q.qualification_or_grade,
+       q.workshop_id,
+       q.section_id,
        q.workshop_name,
        q.section_name,
        q.brigade_name
-FROM (SELECT DISTINCT 'ITP'                             AS personnel_type,
+FROM (SELECT DISTINCT 'ITP'                                           AS personnel_type,
                       e.employee_id,
                       e.full_name,
                       e.birth_date,
                       e.hire_date,
                       pcat.category_code,
-                      pcat.name                         AS category_name,
-                      i.position                        AS position_name,
-                      i.qualification                   AS qualification_or_grade,
-                      COALESCE(w_head.name, w_sec.name) AS workshop_name,
-                      s.name                            AS section_name,
-                      NULL::VARCHAR(100)                AS brigade_name
+                      pcat.name                                       AS category_name,
+                      i.position                                      AS position_name,
+                      i.qualification                                 AS qualification_or_grade,
+                      COALESCE(w_sec.workshop_id, w_head.workshop_id) AS workshop_id,
+                      s.section_id,
+                      COALESCE(w_head.name, w_sec.name)               AS workshop_name,
+                      s.name                                          AS section_name,
+                      NULL::VARCHAR(100)                              AS brigade_name
       FROM employee e
                JOIN itp i USING (employee_id)
                JOIN personnel_category pcat USING (category_code)
@@ -71,6 +76,8 @@ FROM (SELECT DISTINCT 'ITP'                             AS personnel_type,
              pcat.name             AS category_name,
              wr.specialty          AS position_name,
              wr.grade::VARCHAR(20) AS qualification_or_grade,
+             w.workshop_id,
+             s.section_id,
              w.name                AS workshop_name,
              s.name                AS section_name,
              b.name                AS brigade_name

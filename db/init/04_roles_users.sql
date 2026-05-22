@@ -8,6 +8,8 @@ ALTER
     ROLE role_admin SET lock_timeout = '5s';
 ALTER
     ROLE role_admin SET statement_timeout = '30s';
+-- Пользователи workshop/laboratory — модель из отчёта; Qt-клиент их не использует (см. LoginDialog).
+
 -- пользователи
 CREATE
     USER user_admin WITH PASSWORD 'admin_password';
@@ -68,14 +70,8 @@ ALTER
 ALTER
     DEFAULT PRIVILEGES IN SCHEMA public
     GRANT ALL PRIVILEGES ON ROUTINES TO role_admin;
--- права роли производственной отчетности
-GRANT
-    SELECT
-    ON
-    vw_product_types,
-    vw_finished_products,
-    vw_current_products
-    TO role_production_report;
+-- Права production_report для клиента — в 05_grants_extend.sql
+
 -- права кадровой роли
 GRANT
     SELECT

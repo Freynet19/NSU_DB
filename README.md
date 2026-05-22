@@ -66,22 +66,22 @@ cmake --build build -j
 | `db/init/00_types_tables.sql` | Типы, таблицы, индексы |
 | `db/init/01_triggers.sql` | Триггеры |
 | `db/init/02_procedures.sql` | 8 хранимых процедур |
-| `db/init/03_views.sql` | 11 представлений |
+| `db/init/03_views.sql` | 12 представлений (`vw_*`) |
 | `db/init/04_roles_users.sql` | Роли и пользователи |
-| `db/init/05_grants_extend.sql` | Доп. права HR и отчётности |
-| `db/init/06_prepare.sql` | 14 PREPARE + примеры EXECUTE |
-| `db/init/06_prepare_only.sql` | Только PREPARE (для сессии клиента) |
-| `db/init/07_seed.sql` | Тестовые данные |
+| `db/init/05_grants_extend.sql` | Права HR и production для Qt-клиента |
+| `db/init/06_seed.sql` | Тестовые данные |
+
+**PREPARE** для отчётов не в init: [`client/resources/prepare_statements.sql`](client/resources/prepare_statements.sql) выполняется при входе в приложение (на сессию).
 
 Исходный текст также в отчёте: `Отчёт 23201 Смирнов версия 0.6.md`.
 
 ## Функциональность клиента
 
-- **Администратор:** CRUD всех таблиц, `CALL` всех процедур, 14 отчётов (`EXECUTE` PREPARE).
-- **HR:** `proc_hire_worker`, `proc_hire_itp`, `proc_transfer_employee`, `proc_dismiss_employee`; отчёты 3, 4, 6, 7.
-- **Отчётность:** только чтение — отчёты 1, 2, 8, 10, 11, 14.
+- **Администратор:** CRUD всех таблиц, `CALL` всех процедур, 14 отчётов (`EXECUTE` PREPARE по всем `vw_*`).
+- **HR:** `proc_hire_worker`, `proc_hire_itp`, `proc_transfer_employee`, `proc_dismiss_employee`; отчёты 3, 4, 6, 7 (чтение `vw_personnel_data`, `vw_sections`, `vw_brigade_composition`, `vw_section_masters`).
+- **Отчётность:** только чтение — отчёты 1, 2, 8, 10, 11, 14 (соответствующие `vw_product_types`, `vw_finished_products`, `vw_current_products`, `vw_product_laboratories`, `vw_tested_products`).
 
-При подключении клиент выполняет `PREPARE` из `prepare_statements.sql` в текущей сессии (в PostgreSQL prepared statements не сохраняются между сессиями).
+При подключении клиент выполняет `PREPARE` из `prepare_statements.sql` в текущей сессии; тела запросов читают данные через представления `vw_*` (права ролей — `GRANT SELECT` в `04_roles_users.sql` / `05_grants_extend.sql`).
 
 ## Структура репозитория
 
