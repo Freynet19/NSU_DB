@@ -47,27 +47,6 @@ QString QueryRepository::sqlLiteral(const QVariant &value) const
     return QStringLiteral("'%1'").arg(value.toString());
 }
 
-QSqlQueryModel *QueryRepository::runSelectQuery(QSqlQuery &query, QString *errorMessage)
-{
-    if (!query.exec()) {
-        if (errorMessage) {
-            *errorMessage = query.lastError().text();
-        }
-        return nullptr;
-    }
-
-    auto *model = new QSqlQueryModel;
-    model->setQuery(std::move(query));
-    if (model->lastError().isValid()) {
-        if (errorMessage) {
-            *errorMessage = model->lastError().text();
-        }
-        delete model;
-        return nullptr;
-    }
-    return model;
-}
-
 QSqlQueryModel *QueryRepository::executePrepared(const QString &statement,
                                                   const QVariantList &args,
                                                   QString *errorMessage)
@@ -259,7 +238,7 @@ QSqlQueryModel *QueryRepository::query2ProductList(std::optional<int> workshopId
 }
 
 QSqlQueryModel *QueryRepository::query3Personnel(std::optional<int> workshopId,
-                                                 std::optional<int> sectionId,
+                                                 std::optional<int> categoryCode,
                                                  const QString &personnelType,
                                                  QString *errorMessage)
 {
@@ -269,7 +248,7 @@ QSqlQueryModel *QueryRepository::query3Personnel(std::optional<int> workshopId,
     }
     return executePrepared(QStringLiteral("get_personnel_data"),
                            {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant(),
+                            categoryCode ? QVariant(*categoryCode) : QVariant(),
                             typeArg},
                            errorMessage);
 }
@@ -300,8 +279,8 @@ QSqlQueryModel *QueryRepository::query6BrigadeComposition(std::optional<int> wor
                                                           QString *errorMessage)
 {
     return executePrepared(QStringLiteral("get_brigade_composition"),
-                           {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant()},
+                           {sectionId ? QVariant(*sectionId) : QVariant(),
+                            workshopId ? QVariant(*workshopId) : QVariant()},
                            errorMessage);
 }
 
@@ -310,8 +289,8 @@ QSqlQueryModel *QueryRepository::query7SectionMasters(std::optional<int> worksho
                                                       QString *errorMessage)
 {
     return executePrepared(QStringLiteral("get_section_masters"),
-                           {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant()},
+                           {sectionId ? QVariant(*sectionId) : QVariant(),
+                            workshopId ? QVariant(*workshopId) : QVariant()},
                            errorMessage);
 }
 
@@ -321,8 +300,8 @@ QSqlQueryModel *QueryRepository::query8CurrentProducts(std::optional<int> worksh
                                                        QString *errorMessage)
 {
     return executePrepared(QStringLiteral("get_current_products"),
-                           {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant(),
+                           {sectionId ? QVariant(*sectionId) : QVariant(),
+                            workshopId ? QVariant(*workshopId) : QVariant(),
                             categoryId ? QVariant(*categoryId) : QVariant()},
                            errorMessage);
 }
@@ -392,8 +371,8 @@ QSqlQueryModel *QueryRepository::query14CurrentCount(std::optional<int> workshop
                                                      QString *errorMessage)
 {
     return executePrepared(QStringLiteral("get_current_products_count"),
-                           {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant(),
+                           {sectionId ? QVariant(*sectionId) : QVariant(),
+                            workshopId ? QVariant(*workshopId) : QVariant(),
                             categoryId ? QVariant(*categoryId) : QVariant()},
                            errorMessage);
 }
@@ -404,8 +383,8 @@ QSqlQueryModel *QueryRepository::query14CurrentList(std::optional<int> workshopI
                                                     QString *errorMessage)
 {
     return executePrepared(QStringLiteral("get_current_products_list"),
-                           {workshopId ? QVariant(*workshopId) : QVariant(),
-                            sectionId ? QVariant(*sectionId) : QVariant(),
+                           {sectionId ? QVariant(*sectionId) : QVariant(),
+                            workshopId ? QVariant(*workshopId) : QVariant(),
                             categoryId ? QVariant(*categoryId) : QVariant()},
                            errorMessage);
 }

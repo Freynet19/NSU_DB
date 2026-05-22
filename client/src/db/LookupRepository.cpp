@@ -60,6 +60,12 @@ QString selectSql(LookupKind kind)
     return {};
 }
 
+QHash<QString, QHash<int, QList<LookupItem>>> &sharedLookupCaches()
+{
+    static QHash<QString, QHash<int, QList<LookupItem>>> caches;
+    return caches;
+}
+
 } // namespace
 
 LookupRepository::LookupRepository(const QString &connectionName)
@@ -69,18 +75,19 @@ LookupRepository::LookupRepository(const QString &connectionName)
 
 void LookupRepository::clearCache()
 {
-    m_cache.clear();
+    sharedLookupCaches().remove(m_connectionName);
 }
 
 QList<LookupItem> LookupRepository::items(LookupKind kind, QString *errorMessage)
 {
     const int key = static_cast<int>(kind);
-    if (m_cache.contains(key)) {
-        return m_cache.value(key);
+    QHash<int, QList<LookupItem>> &cache = sharedLookupCaches()[m_connectionName];
+    if (cache.contains(key)) {
+        return cache.value(key);
     }
 
     const QList<LookupItem> loaded = loadItems(kind, errorMessage);
-    m_cache.insert(key, loaded);
+    cache.insert(key, loaded);
     return loaded;
 }
 

@@ -76,7 +76,7 @@ public:
                                       QString *errorMessage = nullptr);
 
     QSqlQueryModel *query3Personnel(std::optional<int> workshopId,
-                                    std::optional<int> sectionId,
+                                    std::optional<int> categoryCode,
                                     const QString &personnelType,
                                     QString *errorMessage = nullptr);
 
@@ -141,7 +141,6 @@ private:
                                     const QVariantList &args,
                                     QString *errorMessage);
     QString sqlLiteral(const QVariant &value) const;
-    QSqlQueryModel *runSelectQuery(QSqlQuery &query, QString *errorMessage);
     QSqlDatabase connection() const;
 
     QString m_connectionName;

@@ -21,17 +21,21 @@ namespace {
 void addExecuteButton(QFormLayout *form,
                       ProcedureFormWidget *widget,
                       QWidget *messageParent,
+                      LookupRepository *lookups,
                       const QString &text,
                       const QString &successMessage,
                       const std::function<bool(QString *)> &action)
 {
     auto *btn = new QPushButton(text, widget);
     form->addRow(btn);
-    QObject::connect(btn, &QPushButton::clicked, widget, [messageParent, successMessage, action]() {
+    QObject::connect(btn, &QPushButton::clicked, widget, [messageParent, lookups, successMessage, action]() {
         QString err;
         if (!action(&err)) {
             QMessageBox::critical(messageParent, QObject::tr("Ошибка"), err);
         } else {
+            if (lookups) {
+                lookups->clearCache();
+            }
             QMessageBox::information(messageParent, QObject::tr("Готово"), successMessage);
         }
     });
@@ -66,11 +70,17 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Принять рабочего"),
                          QObject::tr("Рабочий принят."),
                          [repository, name, birth, hire, cat, spec, grade, brigade](QString *err) {
+                             const std::optional<int> categoryCode =
+                                 requireComboValue(cat, QObject::tr("Категория персонала"), err);
+                             if (!categoryCode) {
+                                 return false;
+                             }
                              return repository->callProcHireWorker(
-                                 name->text(), birth->date(), hire->date(), requiredComboValue(cat),
+                                 name->text(), birth->date(), hire->date(), *categoryCode,
                                  spec->text(), grade->value(), optionalComboValue(brigade), err);
                          });
         break;
@@ -89,12 +99,18 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Принять ИТП"),
                          QObject::tr("ИТП принят."),
                          [repository, name, birth, hire, cat, pos, qual](QString *err) {
+                             const std::optional<int> categoryCode =
+                                 requireComboValue(cat, QObject::tr("Категория персонала"), err);
+                             if (!categoryCode) {
+                                 return false;
+                             }
                              return repository->callProcHireItp(name->text(), birth->date(), hire->date(),
-                                                              requiredComboValue(cat), pos->text(),
-                                                              qual->text(), err);
+                                                              *categoryCode, pos->text(), qual->text(),
+                                                              err);
                          });
         break;
     }
@@ -110,11 +126,17 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Перевести сотрудника"),
                          QObject::tr("Перевод выполнен."),
                          [repository, emp, brigade, section, desc](QString *err) {
+                             const std::optional<int> employeeId =
+                                 requireComboValue(emp, QObject::tr("Сотрудник"), err);
+                             if (!employeeId) {
+                                 return false;
+                             }
                              return repository->callProcTransferEmployee(
-                                 requiredComboValue(emp), optionalComboValue(brigade),
+                                 *employeeId, optionalComboValue(brigade),
                                  optionalComboValue(section), desc->text(), err);
                          });
         break;
@@ -127,11 +149,17 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Уволить сотрудника"),
                          QObject::tr("Увольнение зарегистрировано."),
                          [repository, emp, desc](QString *err) {
-                             return repository->callProcDismissEmployee(requiredComboValue(emp),
-                                                                      desc->text(), err);
+                             const std::optional<int> employeeId =
+                                 requireComboValue(emp, QObject::tr("Сотрудник"), err);
+                             if (!employeeId) {
+                                 return false;
+                             }
+                             return repository->callProcDismissEmployee(*employeeId, desc->text(),
+                                                                      err);
                          });
         break;
     }
@@ -146,12 +174,21 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Назначить бригаду на этап"),
                          QObject::tr("Бригада назначена на этап."),
                          [repository, inst, stage, brig, start](QString *err) {
+                             const std::optional<int> instanceId =
+                                 requireComboValue(inst, QObject::tr("Экземпляр изделия"), err);
+                             const std::optional<int> stageId =
+                                 requireComboValue(stage, QObject::tr("Этап производства"), err);
+                             const std::optional<int> brigadeId =
+                                 requireComboValue(brig, QObject::tr("Бригада"), err);
+                             if (!instanceId || !stageId || !brigadeId) {
+                                 return false;
+                             }
                              return repository->callProcAssignBrigadeToStage(
-                                 requiredComboValue(inst), requiredComboValue(stage),
-                                 requiredComboValue(brig), start->date(), err);
+                                 *instanceId, *stageId, *brigadeId, start->date(), err);
                          });
         break;
     }
@@ -162,11 +199,16 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Завершить этап сборки"),
                          QObject::tr("Этап завершён."),
                          [repository, rec, end](QString *err) {
-                             return repository->callProcCompleteStage(requiredComboValue(rec),
-                                                                    end->date(), err);
+                             const std::optional<int> recordId =
+                                 requireComboValue(rec, QObject::tr("Запись сборки"), err);
+                             if (!recordId) {
+                                 return false;
+                             }
+                             return repository->callProcCompleteStage(*recordId, end->date(), err);
                          });
         break;
     }
@@ -179,11 +221,18 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Зарегистрировать испытание"),
                          QObject::tr("Испытание зарегистрировано."),
                          [repository, inst, lab, date](QString *err) {
-                             return repository->callProcRegisterTest(requiredComboValue(inst),
-                                                                     requiredComboValue(lab),
+                             const std::optional<int> instanceId =
+                                 requireComboValue(inst, QObject::tr("Экземпляр изделия"), err);
+                             const std::optional<int> laboratoryId =
+                                 requireComboValue(lab, QObject::tr("Лаборатория"), err);
+                             if (!instanceId || !laboratoryId) {
+                                 return false;
+                             }
+                             return repository->callProcRegisterTest(*instanceId, *laboratoryId,
                                                                      date->date(), err);
                          });
         break;
@@ -196,11 +245,16 @@ void ProcedureFormBuilder::configure(ProcedureFormWidget *widget,
         addExecuteButton(form,
                          widget,
                          messageParent,
+                         lookups,
                          QObject::tr("Завершить испытание"),
                          QObject::tr("Испытание завершено."),
                          [repository, testId, result](QString *err) {
-                             return repository->callProcCompleteTest(requiredComboValue(testId),
-                                                                     result->text(), err);
+                             const std::optional<int> id =
+                                 requireComboValue(testId, QObject::tr("Испытание"), err);
+                             if (!id) {
+                                 return false;
+                             }
+                             return repository->callProcCompleteTest(*id, result->text(), err);
                          });
         break;
     }

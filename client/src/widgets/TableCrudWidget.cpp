@@ -283,6 +283,7 @@ void TableCrudWidget::saveChanges()
 
     setDirty(false);
     updateStatus();
+    emit dataCommitted();
 }
 
 void TableCrudWidget::revertChanges()

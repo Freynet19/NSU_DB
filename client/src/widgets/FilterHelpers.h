@@ -86,12 +86,17 @@ inline std::optional<int> optionalComboValue(const QComboBox *combo)
     return value;
 }
 
-inline int requiredComboValue(const QComboBox *combo)
+inline std::optional<int> requireComboValue(const QComboBox *combo,
+                                            const QString &label,
+                                            QString *errorMessage)
 {
     if (const std::optional<int> value = optionalComboValue(combo)) {
-        return *value;
+        return value;
     }
-    return 0;
+    if (errorMessage) {
+        *errorMessage = QObject::tr("Выберите значение: %1").arg(label);
+    }
+    return std::nullopt;
 }
 
 inline QSpinBox *addOptionalIntFilter(QFormLayout *form, const QString &label, QWidget *parent)

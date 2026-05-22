@@ -23,6 +23,9 @@ public:
 
     void refresh();
 
+signals:
+    void dataCommitted();
+
 public slots:
     bool maybeDiscardChanges();
 

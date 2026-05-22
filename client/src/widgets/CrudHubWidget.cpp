@@ -1,5 +1,7 @@
 #include "widgets/CrudHubWidget.h"
 
+#include "db/DatabaseManager.h"
+#include "db/LookupRepository.h"
 #include "ui_CrudHubWidget.h"
 #include "widgets/TableCrudWidget.h"
 
@@ -84,6 +86,9 @@ TableCrudWidget *CrudHubWidget::tableWidget(const QString &tableName)
     }
 
     auto *widget = new TableCrudWidget(tableName, {}, this);
+    connect(widget, &TableCrudWidget::dataCommitted, this, [this]() {
+        LookupRepository(DatabaseManager::instance().connectionName()).clearCache();
+    });
     m_tableWidgets.insert(tableName, widget);
     ui->crudStack->addWidget(widget);
     return widget;

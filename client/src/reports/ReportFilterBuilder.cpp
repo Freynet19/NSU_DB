@@ -6,8 +6,9 @@
 #include "widgets/FilterHelpers.h"
 #include "widgets/ReportTableWidget.h"
 
-#include <QDate>
 #include <QComboBox>
+#include <QDate>
+#include <QSqlQueryModel>
 
 namespace {
 
@@ -83,11 +84,11 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
     case ReportId::Personnel: {
         auto *ws = addOptionalEntityCombo(form, QObject::tr("Цех"), widget,
                                           lookups->items(LookupKind::Workshop));
-        auto *sec = addOptionalEntityCombo(form, QObject::tr("Участок"), widget,
-                                           lookups->items(LookupKind::Section));
+        auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория персонала"), widget,
+                                           lookups->items(LookupKind::PersonnelCategory));
         auto *type = addPersonnelTypeFilter(form, widget);
-        widget->setRunReport([repository, ws, sec, type](QString *err) {
-            return repository->query3Personnel(optionalComboValue(ws), optionalComboValue(sec),
+        widget->setRunReport([repository, ws, cat, type](QString *err) {
+            return repository->query3Personnel(optionalComboValue(ws), optionalComboValue(cat),
                                                type->currentData().toString(), err);
         });
         break;
@@ -109,8 +110,13 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
     }
     case ReportId::ProductWorks: {
         auto *inst = addInstanceFilter(form, widget, lookups);
-        widget->setRunReport([repository, inst](QString *err) {
-            return repository->query5ProductWorks(requiredComboValue(inst), err);
+        widget->setRunReport([repository, inst](QString *err) -> QSqlQueryModel * {
+            const std::optional<int> instanceId =
+                requireComboValue(inst, QObject::tr("Экземпляр изделия"), err);
+            if (!instanceId) {
+                return nullptr;
+            }
+            return repository->query5ProductWorks(*instanceId, err);
         });
         break;
     }
@@ -150,27 +156,42 @@ void ReportFilterBuilder::configure(ReportTableWidget *widget,
     }
     case ReportId::ProductBrigades: {
         auto *inst = addInstanceFilter(form, widget, lookups);
-        widget->setRunReport([repository, inst](QString *err) {
-            return repository->query9ProductBrigades(requiredComboValue(inst), err);
+        widget->setRunReport([repository, inst](QString *err) -> QSqlQueryModel * {
+            const std::optional<int> instanceId =
+                requireComboValue(inst, QObject::tr("Экземпляр изделия"), err);
+            if (!instanceId) {
+                return nullptr;
+            }
+            return repository->query9ProductBrigades(*instanceId, err);
         });
         break;
     }
     case ReportId::ProductLaboratories: {
         auto *inst = addInstanceFilter(form, widget, lookups);
-        widget->setRunReport([repository, inst](QString *err) {
-            return repository->query10ProductLaboratories(requiredComboValue(inst), err);
+        widget->setRunReport([repository, inst](QString *err) -> QSqlQueryModel * {
+            const std::optional<int> instanceId =
+                requireComboValue(inst, QObject::tr("Экземпляр изделия"), err);
+            if (!instanceId) {
+                return nullptr;
+            }
+            return repository->query10ProductLaboratories(*instanceId, err);
         });
         break;
     }
     case ReportId::TestedInLab: {
-        auto *lab = addOptionalEntityCombo(form, QObject::tr("Лаборатория"), widget,
+        auto *lab = addRequiredEntityCombo(form, QObject::tr("Лаборатория"), widget,
                                            lookups->items(LookupKind::Laboratory));
         auto *cat = addOptionalEntityCombo(form, QObject::tr("Категория"), widget,
                                            lookups->items(LookupKind::ProductCategory));
         auto *from = addDateFilter(form, QObject::tr("С"), QDate(2020, 1, 1), widget);
         auto *to = addDateFilter(form, QObject::tr("По"), QDate::currentDate(), widget);
-        widget->setRunReport([repository, lab, cat, from, to](QString *err) {
-            return repository->query11TestedProducts(optionalComboValue(lab), optionalComboValue(cat),
+        widget->setRunReport([repository, lab, cat, from, to](QString *err) -> QSqlQueryModel * {
+            const std::optional<int> laboratoryId =
+                requireComboValue(lab, QObject::tr("Лаборатория"), err);
+            if (!laboratoryId) {
+                return nullptr;
+            }
+            return repository->query11TestedProducts(laboratoryId, optionalComboValue(cat),
                                                      from->date(), to->date(), err);
         });
         break;

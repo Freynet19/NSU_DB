@@ -2,7 +2,6 @@
 
 #include "db/LookupItem.h"
 
-#include <QHash>
 #include <QList>
 #include <QString>
 
@@ -32,5 +31,4 @@ private:
     QList<LookupItem> loadItems(LookupKind kind, QString *errorMessage);
 
     QString m_connectionName;
-    QHash<int, QList<LookupItem>> m_cache;
 };
