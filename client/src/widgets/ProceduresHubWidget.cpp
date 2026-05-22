@@ -11,33 +11,35 @@
 #include <QListWidget>
 #include <QVBoxLayout>
 
-ProceduresHubWidget::ProceduresHubWidget(QueryRepository *repository, UserRole role, QWidget *parent)
+ProceduresHubWidget::ProceduresHubWidget(QueryRepository* repository, UserRole role, QWidget* parent)
     : QWidget(parent)
-    , ui(new Ui::ProceduresHubWidget)
-    , m_repository(repository)
-    , m_lookups(new LookupRepository(DatabaseManager::instance().connectionName()))
-    , m_procedures(ProcedureCatalog::proceduresForRole(role))
+      , ui(new Ui::ProceduresHubWidget)
+      , m_repository(repository)
+      , m_lookups(new LookupRepository(DatabaseManager::instance().connectionName()))
+      , m_procedures(ProcedureCatalog::proceduresForRole(role))
 {
     ui->setupUi(this);
     ui->rightLayout->setStretch(1, 1);
 
-    auto *formLayout = new QVBoxLayout(ui->formHost);
+    auto* formLayout = new QVBoxLayout(ui->formHost);
     formLayout->setContentsMargins(0, 0, 0, 0);
     m_formWidget = new ProcedureFormWidget(ui->formHost);
     formLayout->addWidget(m_formWidget);
 
-    for (const ProcedureDefinition &procedure : m_procedures) {
-        auto *item =
+    for (const ProcedureDefinition& procedure : m_procedures)
+    {
+        auto* item =
             new QListWidgetItem(ProcedureCatalog::listItemTitle(procedure), ui->procedureList);
         item->setToolTip(QStringLiteral("%1\n(%2)")
-                             .arg(procedure.description, procedure.sqlName));
+            .arg(procedure.description, procedure.sqlName));
         item->setData(Qt::UserRole, static_cast<int>(procedure.id));
     }
 
     connect(ui->procedureList, &QListWidget::currentRowChanged, this,
             &ProceduresHubWidget::onProcedureSelected);
 
-    if (!m_procedures.isEmpty()) {
+    if (!m_procedures.isEmpty())
+    {
         ui->procedureList->setCurrentRow(0);
     }
 }
@@ -50,13 +52,14 @@ ProceduresHubWidget::~ProceduresHubWidget()
 
 void ProceduresHubWidget::onProcedureSelected(int index)
 {
-    if (index < 0 || index >= m_procedures.size()) {
+    if (index < 0 || index >= m_procedures.size())
+    {
         ui->descriptionLabel->clear();
         m_formWidget->clearForm();
         return;
     }
 
-    const ProcedureDefinition &procedure = m_procedures.at(index);
+    const ProcedureDefinition& procedure = m_procedures.at(index);
     ui->descriptionLabel->setText(
         QStringLiteral("%1 (%2)").arg(procedure.description, procedure.sqlName));
     ProcedureFormBuilder::configure(m_formWidget, procedure.id, m_repository, m_lookups, this);

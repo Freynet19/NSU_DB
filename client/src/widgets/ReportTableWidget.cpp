@@ -11,26 +11,27 @@
 #include <QPushButton>
 #include <QSqlQueryModel>
 
-namespace {
-
-std::optional<qlonglong> scalarCountFromModel(QSqlQueryModel *model)
+namespace
 {
-    if (!model || model->rowCount() == 0 || model->columnCount() == 0) {
-        return std::nullopt;
+    std::optional<qlonglong> scalarCountFromModel(QSqlQueryModel* model)
+    {
+        if (!model || model->rowCount() == 0 || model->columnCount() == 0)
+        {
+            return std::nullopt;
+        }
+        bool ok = false;
+        const qlonglong value = model->data(model->index(0, 0)).toLongLong(&ok);
+        if (!ok)
+        {
+            return std::nullopt;
+        }
+        return value;
     }
-    bool ok = false;
-    const qlonglong value = model->data(model->index(0, 0)).toLongLong(&ok);
-    if (!ok) {
-        return std::nullopt;
-    }
-    return value;
-}
-
 } // namespace
 
-ReportTableWidget::ReportTableWidget(QWidget *parent)
+ReportTableWidget::ReportTableWidget(QWidget* parent)
     : QWidget(parent)
-    , ui(new Ui::ReportTableWidget)
+      , ui(new Ui::ReportTableWidget)
 {
     ui->setupUi(this);
     ui->tableView->horizontalHeader()->setStretchLastSection(true);
@@ -40,7 +41,8 @@ ReportTableWidget::ReportTableWidget(QWidget *parent)
 
 ReportTableWidget::~ReportTableWidget()
 {
-    if (m_model) {
+    if (m_model)
+    {
         ui->tableView->setModel(nullptr);
         delete m_model;
         m_model = nullptr;
@@ -48,7 +50,7 @@ ReportTableWidget::~ReportTableWidget()
     delete ui;
 }
 
-QFormLayout *ReportTableWidget::filterLayout() const
+QFormLayout* ReportTableWidget::filterLayout() const
 {
     return ui->filterLayout;
 }
@@ -63,7 +65,8 @@ void ReportTableWidget::clearFilters()
 
 void ReportTableWidget::clearResults()
 {
-    if (m_model) {
+    if (m_model)
+    {
         ui->tableView->setModel(nullptr);
         delete m_model;
         m_model = nullptr;
@@ -81,7 +84,7 @@ void ReportTableWidget::setRunCount(RunReportFn fn)
     m_runCount = std::move(fn);
 }
 
-void ReportTableWidget::setCountCaption(const QString &caption)
+void ReportTableWidget::setCountCaption(const QString& caption)
 {
     m_countCaption = caption;
 }
@@ -94,16 +97,19 @@ void ReportTableWidget::hideCountDisplay()
 
 void ReportTableWidget::updateCountDisplay()
 {
-    if (!m_runCount || m_countCaption.isEmpty()) {
+    if (!m_runCount || m_countCaption.isEmpty())
+    {
         hideCountDisplay();
         return;
     }
 
     QString error;
-    QSqlQueryModel *countModel = m_runCount(&error);
-    if (!countModel) {
+    QSqlQueryModel* countModel = m_runCount(&error);
+    if (!countModel)
+    {
         hideCountDisplay();
-        if (!error.isEmpty()) {
+        if (!error.isEmpty())
+        {
             QMessageBox::critical(this, tr("Ошибка запроса"), error);
         }
         return;
@@ -112,7 +118,8 @@ void ReportTableWidget::updateCountDisplay()
     const std::optional<qlonglong> count = scalarCountFromModel(countModel);
     delete countModel;
 
-    if (!count.has_value()) {
+    if (!count.has_value())
+    {
         hideCountDisplay();
         return;
     }
@@ -126,28 +133,33 @@ void ReportTableWidget::updateCountDisplay()
 
 void ReportTableWidget::runReport()
 {
-    if (!m_runReport && !m_runCount) {
+    if (!m_runReport && !m_runCount)
+    {
         return;
     }
 
-    if (m_model) {
+    if (m_model)
+    {
         ui->tableView->setModel(nullptr);
         delete m_model;
         m_model = nullptr;
     }
     hideCountDisplay();
 
-    if (m_runCount) {
+    if (m_runCount)
+    {
         updateCountDisplay();
     }
 
-    if (!m_runReport) {
+    if (!m_runReport)
+    {
         return;
     }
 
     QString error;
     m_model = m_runReport(&error);
-    if (!m_model) {
+    if (!m_model)
+    {
         QMessageBox::critical(this, tr("Ошибка запроса"), error);
         return;
     }

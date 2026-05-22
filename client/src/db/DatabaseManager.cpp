@@ -7,47 +7,55 @@
 #include <QSqlQuery>
 #include <QUuid>
 
-DatabaseManager &DatabaseManager::instance()
+DatabaseManager& DatabaseManager::instance()
 {
     static DatabaseManager manager;
     return manager;
 }
 
-QString DatabaseManager::formatConnectionError(const QString &rawError, const QString &username)
+QString DatabaseManager::formatConnectionError(const QString& rawError, const QString& username)
 {
     const QString text = rawError.toLower();
 
     if (text.contains(QStringLiteral("password authentication failed"))
-        || text.contains(QStringLiteral("неверный пароль"))) {
-        if (username.isEmpty()) {
+        || text.contains(QStringLiteral("неверный пароль")))
+    {
+        if (username.isEmpty())
+        {
             return QStringLiteral("Неверный пароль.");
         }
         return QStringLiteral("Неверный пароль для пользователя «%1».").arg(username);
     }
 
-    if (text.contains(QStringLiteral("no password supplied"))) {
+    if (text.contains(QStringLiteral("no password supplied")))
+    {
         return QStringLiteral("Введите пароль.");
     }
 
     if (text.contains(QStringLiteral("connection refused"))
-        || text.contains(QStringLiteral("could not connect to server"))) {
+        || text.contains(QStringLiteral("could not connect to server")))
+    {
         return QStringLiteral(
             "Не удалось подключиться к серверу. Проверьте хост, порт и запуск PostgreSQL (docker compose up -d).");
     }
 
-    if (text.contains(QStringLiteral("timeout")) || text.contains(QStringLiteral("timed out"))) {
+    if (text.contains(QStringLiteral("timeout")) || text.contains(QStringLiteral("timed out")))
+    {
         return QStringLiteral("Истекло время ожидания подключения к серверу.");
     }
 
-    if (text.contains(QStringLiteral("database")) && text.contains(QStringLiteral("does not exist"))) {
+    if (text.contains(QStringLiteral("database")) && text.contains(QStringLiteral("does not exist")))
+    {
         return QStringLiteral("База данных не найдена. Проверьте имя базы (по умолчанию: test).");
     }
 
-    if (text.contains(QStringLiteral("role")) && text.contains(QStringLiteral("does not exist"))) {
+    if (text.contains(QStringLiteral("role")) && text.contains(QStringLiteral("does not exist")))
+    {
         return QStringLiteral("Пользователь не найден в базе данных.");
     }
 
-    if (rawError.isEmpty()) {
+    if (rawError.isEmpty())
+    {
         return QStringLiteral("Не удалось подключиться к базе данных.");
     }
 
@@ -56,18 +64,19 @@ QString DatabaseManager::formatConnectionError(const QString &rawError, const QS
 
 QSqlDatabase DatabaseManager::connection() const
 {
-    if (m_connectionName.isEmpty()) {
+    if (m_connectionName.isEmpty())
+    {
         return QSqlDatabase();
     }
     return QSqlDatabase::database(m_connectionName);
 }
 
-bool DatabaseManager::connect(const QString &host,
+bool DatabaseManager::connect(const QString& host,
                               int port,
-                              const QString &database,
-                              const QString &username,
-                              const QString &password,
-                              QString *errorMessage)
+                              const QString& database,
+                              const QString& username,
+                              const QString& password,
+                              QString* errorMessage)
 {
     disconnect();
 
@@ -79,8 +88,10 @@ bool DatabaseManager::connect(const QString &host,
     db.setUserName(username);
     db.setPassword(password);
 
-    if (!db.open()) {
-        if (errorMessage) {
+    if (!db.open())
+    {
+        if (errorMessage)
+        {
             *errorMessage = formatConnectionError(db.lastError().text(), username);
         }
         db = QSqlDatabase();
@@ -92,7 +103,8 @@ bool DatabaseManager::connect(const QString &host,
     m_username = username;
     m_role = userRoleFromUsername(username);
 
-    if (!loadPrepareStatements(errorMessage)) {
+    if (!loadPrepareStatements(errorMessage))
+    {
         disconnect();
         return false;
     }
@@ -102,7 +114,8 @@ bool DatabaseManager::connect(const QString &host,
 
 void DatabaseManager::disconnect()
 {
-    if (m_connectionName.isEmpty()) {
+    if (m_connectionName.isEmpty())
+    {
         return;
     }
 
@@ -113,7 +126,8 @@ void DatabaseManager::disconnect()
 
     {
         QSqlDatabase db = QSqlDatabase::database(connectionName);
-        if (db.isValid() && db.isOpen()) {
+        if (db.isValid() && db.isOpen())
+        {
             db.close();
         }
     }
@@ -123,7 +137,8 @@ void DatabaseManager::disconnect()
 
 bool DatabaseManager::isConnected() const
 {
-    if (m_connectionName.isEmpty() || !QSqlDatabase::contains(m_connectionName)) {
+    if (m_connectionName.isEmpty() || !QSqlDatabase::contains(m_connectionName))
+    {
         return false;
     }
     return QSqlDatabase::database(m_connectionName).isOpen();
@@ -144,28 +159,31 @@ UserRole DatabaseManager::role() const
     return m_role;
 }
 
-namespace {
-
-QString stripLineComments(const QString &sql)
+namespace
 {
-    QStringList lines;
-    for (const QString &line : sql.split(QLatin1Char('\n'))) {
-        const QString trimmed = line.trimmed();
-        if (trimmed.startsWith(QLatin1String("--"))) {
-            continue;
+    QString stripLineComments(const QString& sql)
+    {
+        QStringList lines;
+        for (const QString& line : sql.split(QLatin1Char('\n')))
+        {
+            const QString trimmed = line.trimmed();
+            if (trimmed.startsWith(QLatin1String("--")))
+            {
+                continue;
+            }
+            lines.append(line);
         }
-        lines.append(line);
+        return lines.join(QLatin1Char('\n'));
     }
-    return lines.join(QLatin1Char('\n'));
-}
-
 } // namespace
 
-bool DatabaseManager::loadPrepareStatements(QString *errorMessage)
+bool DatabaseManager::loadPrepareStatements(QString* errorMessage)
 {
     QFile file(QStringLiteral(":/prepare_statements.sql"));
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        if (errorMessage) {
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        if (errorMessage)
+        {
             *errorMessage = QStringLiteral("Не удалось открыть prepare_statements.sql");
         }
         return false;
@@ -177,28 +195,35 @@ bool DatabaseManager::loadPrepareStatements(QString *errorMessage)
 
     QSqlQuery query(connection());
     int preparedCount = 0;
-    for (const QString &rawStatement : statements) {
+    for (const QString& rawStatement : statements)
+    {
         QString statement = rawStatement.trimmed();
-        if (statement.isEmpty()) {
+        if (statement.isEmpty())
+        {
             continue;
         }
         const int preparePos = statement.indexOf(QLatin1String("PREPARE"), 0, Qt::CaseInsensitive);
-        if (preparePos < 0) {
+        if (preparePos < 0)
+        {
             continue;
         }
         statement = statement.mid(preparePos);
-        if (!query.exec(statement)) {
-            if (errorMessage) {
+        if (!query.exec(statement))
+        {
+            if (errorMessage)
+            {
                 *errorMessage = QStringLiteral("PREPARE failed: %1\n%2")
-                                    .arg(query.lastError().text(), statement.left(120));
+                    .arg(query.lastError().text(), statement.left(120));
             }
             return false;
         }
         ++preparedCount;
     }
 
-    if (preparedCount == 0) {
-        if (errorMessage) {
+    if (preparedCount == 0)
+    {
+        if (errorMessage)
+        {
             *errorMessage = QStringLiteral("В prepare_statements.sql не найдено ни одного PREPARE");
         }
         return false;

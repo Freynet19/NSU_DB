@@ -9,14 +9,14 @@ class QSqlDatabase;
 class DatabaseManager
 {
 public:
-    static DatabaseManager &instance();
+    static DatabaseManager& instance();
 
-    bool connect(const QString &host,
+    bool connect(const QString& host,
                  int port,
-                 const QString &database,
-                 const QString &username,
-                 const QString &password,
-                 QString *errorMessage = nullptr);
+                 const QString& database,
+                 const QString& username,
+                 const QString& password,
+                 QString* errorMessage = nullptr);
 
     void disconnect();
     bool isConnected() const;
@@ -24,12 +24,12 @@ public:
     QString username() const;
     UserRole role() const;
 
-    static QString formatConnectionError(const QString &rawError, const QString &username = {});
+    static QString formatConnectionError(const QString& rawError, const QString& username = {});
 
 private:
     DatabaseManager() = default;
     QSqlDatabase connection() const;
-    bool loadPrepareStatements(QString *errorMessage);
+    bool loadPrepareStatements(QString* errorMessage);
 
     QString m_connectionName;
     QString m_username;

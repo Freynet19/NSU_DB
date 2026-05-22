@@ -2,8 +2,9 @@
 
 #include <QDialog>
 
-namespace Ui {
-class LoginDialog;
+namespace Ui
+{
+    class LoginDialog;
 }
 
 class LoginDialog : public QDialog
@@ -11,7 +12,7 @@ class LoginDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit LoginDialog(QWidget *parent = nullptr);
+    explicit LoginDialog(QWidget* parent = nullptr);
     ~LoginDialog() override;
 
     QString host() const;
@@ -20,11 +21,11 @@ public:
     QString username() const;
     QString password() const;
 
-    void setConnectionError(const QString &message);
+    void setConnectionError(const QString& message);
 
 private:
     void onLoginAttempt();
     void applyPresetPassword();
 
-    Ui::LoginDialog *ui = nullptr;
+    Ui::LoginDialog* ui = nullptr;
 };

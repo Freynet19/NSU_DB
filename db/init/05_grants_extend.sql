@@ -16,8 +16,11 @@ GRANT INSERT,
     UPDATE,
     SELECT
     ON
-    employee, worker, itp, personnel_movement, brigade
+    employee, worker, itp, personnel_movement, brigade, personnel_category
     TO role_hr;
+
+-- Справочники для комбо «бригада» / «участок» (JOIN section, workshop в LookupRepository)
+GRANT SELECT ON section, workshop TO role_hr;
 
 GRANT
     USAGE,
@@ -40,5 +43,10 @@ GRANT
     SELECT
     ON
     assembly_record,
-    production_cycle
+    production_cycle,
+    work_type
+    TO role_production_report;
+
+-- Фильтры отчётов (LookupRepository): цех, участок, категория, экземпляр, лаборатория
+GRANT SELECT ON workshop, section, product_category, product_type, product_instance, laboratory
     TO role_production_report;

@@ -147,6 +147,19 @@ VALUES (1, 1, 1, 1, '2026-01-16', '2026-02-05', 'completed'),
        (10, 10, 5, 5, '2026-03-06', '2026-03-18', 'completed'),
        (11, 11, 6, 6, '2026-03-02', '2026-03-12', 'completed'),
        (12, 12, 6, 6, '2026-03-13', '2026-03-22', 'completed');
+-- Изделия в процессе сборки (отчёты 8 и 14: vw_current_products)
+INSERT INTO product_instance (instance_id, type_id, start_date, end_date, status)
+VALUES (7, 1, '2026-04-01', NULL, 'assembling'),
+       (8, 4, '2026-04-05', NULL, 'assembling'),
+       (9, 5, '2026-04-08', NULL, 'assembling'),
+       (10, 2, '2026-04-10', NULL, 'assembling'),
+       (11, 6, '2026-04-12', NULL, 'assembling');
+INSERT INTO assembly_record (record_id, stage_id, instance_id, brigade_id, start_date, end_date, status)
+VALUES (13, 1, 7, 1, '2026-04-02', NULL, 'in_progress'),
+       (14, 7, 8, 3, '2026-04-06', NULL, 'in_progress'),
+       (15, 9, 9, 5, '2026-04-09', NULL, 'in_progress'),
+       (16, 3, 10, 4, '2026-04-11', NULL, 'in_progress'),
+       (17, 11, 11, 6, '2026-04-13', NULL, 'in_progress');
 INSERT INTO equipment (equipment_id, laboratory_id, name, type)
 VALUES (1, 1, 'Динамометрический стенд AVL-250', 'Испытательный стенд'),
        (2, 1, 'Газоанализатор Инфракар 08.01', 'Измерительный прибор'),
@@ -200,4 +213,35 @@ VALUES (1, 1, 'hire', '2014-03-17', 'Принят на должность нач
        (11, 11, 'hire', '2023-01-16', 'Принят в бригаду специальной техники'),
        (12, 12, 'hire', '2023-03-13', 'Принята в бригаду легковой сборки'),
        (13, 13, 'hire', '2024-02-19', 'Принят в бригаду мотоциклетной сборки');
+-- После явных INSERT с id — выставить SERIAL, иначе следующий INSERT возьмёт 1 и даст duplicate key
+SELECT setval(pg_get_serial_sequence('personnel_category', 'category_code'),
+              COALESCE((SELECT MAX(category_code) FROM personnel_category), 1));
+SELECT setval(pg_get_serial_sequence('product_category', 'category_id'),
+              COALESCE((SELECT MAX(category_id) FROM product_category), 1));
+SELECT setval(pg_get_serial_sequence('work_type', 'work_type_id'),
+              COALESCE((SELECT MAX(work_type_id) FROM work_type), 1));
+SELECT setval(pg_get_serial_sequence('laboratory', 'laboratory_id'),
+              COALESCE((SELECT MAX(laboratory_id) FROM laboratory), 1));
+SELECT setval(pg_get_serial_sequence('workshop', 'workshop_id'),
+              COALESCE((SELECT MAX(workshop_id) FROM workshop), 1));
+SELECT setval(pg_get_serial_sequence('section', 'section_id'),
+              COALESCE((SELECT MAX(section_id) FROM section), 1));
+SELECT setval(pg_get_serial_sequence('brigade', 'brigade_id'),
+              COALESCE((SELECT MAX(brigade_id) FROM brigade), 1));
+SELECT setval(pg_get_serial_sequence('employee', 'employee_id'),
+              COALESCE((SELECT MAX(employee_id) FROM employee), 1));
+SELECT setval(pg_get_serial_sequence('product_type', 'type_id'),
+              COALESCE((SELECT MAX(type_id) FROM product_type), 1));
+SELECT setval(pg_get_serial_sequence('product_instance', 'instance_id'),
+              COALESCE((SELECT MAX(instance_id) FROM product_instance), 1));
+SELECT setval(pg_get_serial_sequence('production_cycle', 'stage_id'),
+              COALESCE((SELECT MAX(stage_id) FROM production_cycle), 1));
+SELECT setval(pg_get_serial_sequence('assembly_record', 'record_id'),
+              COALESCE((SELECT MAX(record_id) FROM assembly_record), 1));
+SELECT setval(pg_get_serial_sequence('equipment', 'equipment_id'),
+              COALESCE((SELECT MAX(equipment_id) FROM equipment), 1));
+SELECT setval(pg_get_serial_sequence('test', 'test_id'),
+              COALESCE((SELECT MAX(test_id) FROM test), 1));
+SELECT setval(pg_get_serial_sequence('personnel_movement', 'record_id'),
+              COALESCE((SELECT MAX(record_id) FROM personnel_movement), 1));
 COMMIT;

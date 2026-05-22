@@ -7,10 +7,10 @@
 
 #include <QVBoxLayout>
 
-ProductionReportWidget::ProductionReportWidget(QWidget *parent)
+ProductionReportWidget::ProductionReportWidget(QWidget* parent)
     : QWidget(parent)
-    , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
+      , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
 {
-    auto *layout = new QVBoxLayout(this);
+    auto* layout = new QVBoxLayout(this);
     layout->addWidget(new ReportsHubWidget(m_repo, UserRole::ProductionReport, this));
 }

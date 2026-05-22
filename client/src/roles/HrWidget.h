@@ -9,8 +9,8 @@ class HrWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit HrWidget(QWidget *parent = nullptr);
+    explicit HrWidget(QWidget* parent = nullptr);
 
 private:
-    QueryRepository *m_repo = nullptr;
+    QueryRepository* m_repo = nullptr;
 };

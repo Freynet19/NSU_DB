@@ -7,9 +7,9 @@
 #include <QDialogButtonBox>
 #include <QLineEdit>
 
-LoginDialog::LoginDialog(QWidget *parent)
+LoginDialog::LoginDialog(QWidget* parent)
     : QDialog(parent)
-    , ui(new Ui::LoginDialog)
+      , ui(new Ui::LoginDialog)
 {
     ui->setupUi(this);
     resize(420, 280);
@@ -22,7 +22,8 @@ LoginDialog::LoginDialog(QWidget *parent)
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &LoginDialog::onLoginAttempt);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    connect(ui->userCombo, &QComboBox::currentIndexChanged, this, [this]() {
+    connect(ui->userCombo, &QComboBox::currentIndexChanged, this, [this]()
+    {
         applyPresetPassword();
         ui->errorLabel->hide();
     });
@@ -37,9 +38,10 @@ LoginDialog::~LoginDialog()
     delete ui;
 }
 
-void LoginDialog::setConnectionError(const QString &message)
+void LoginDialog::setConnectionError(const QString& message)
 {
-    if (message.isEmpty()) {
+    if (message.isEmpty())
+    {
         ui->errorLabel->hide();
         ui->errorLabel->clear();
         return;
@@ -59,7 +61,8 @@ void LoginDialog::onLoginAttempt()
                                              database(),
                                              username(),
                                              password(),
-                                             &error)) {
+                                             &error))
+    {
         setConnectionError(error);
         ui->passwordEdit->setFocus();
         ui->passwordEdit->selectAll();
@@ -72,11 +75,16 @@ void LoginDialog::onLoginAttempt()
 void LoginDialog::applyPresetPassword()
 {
     const QString user = ui->userCombo->currentData().toString();
-    if (user == QLatin1String("user_admin")) {
+    if (user == QLatin1String("user_admin"))
+    {
         ui->passwordEdit->setText(QStringLiteral("admin_password"));
-    } else if (user == QLatin1String("user_hr")) {
+    }
+    else if (user == QLatin1String("user_hr"))
+    {
         ui->passwordEdit->setText(QStringLiteral("hr_password"));
-    } else {
+    }
+    else
+    {
         ui->passwordEdit->setText(QStringLiteral("production_password"));
     }
 }

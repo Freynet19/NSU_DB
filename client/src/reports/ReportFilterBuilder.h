@@ -9,8 +9,8 @@ class ReportTableWidget;
 class ReportFilterBuilder
 {
 public:
-    static void configure(ReportTableWidget *widget,
+    static void configure(ReportTableWidget* widget,
                           ReportId reportId,
-                          QueryRepository *repository,
-                          LookupRepository *lookups);
+                          QueryRepository* repository,
+                          LookupRepository* lookups);
 };

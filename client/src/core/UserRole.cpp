@@ -2,7 +2,8 @@
 
 QString userRoleDisplayName(UserRole role)
 {
-    switch (role) {
+    switch (role)
+    {
     case UserRole::Admin:
         return QStringLiteral("Администратор БД");
     case UserRole::Hr:
@@ -14,15 +15,18 @@ QString userRoleDisplayName(UserRole role)
     }
 }
 
-UserRole userRoleFromUsername(const QString &username)
+UserRole userRoleFromUsername(const QString& username)
 {
-    if (username == QLatin1String("user_admin")) {
+    if (username == QLatin1String("user_admin"))
+    {
         return UserRole::Admin;
     }
-    if (username == QLatin1String("user_hr")) {
+    if (username == QLatin1String("user_hr"))
+    {
         return UserRole::Hr;
     }
-    if (username == QLatin1String("user_production")) {
+    if (username == QLatin1String("user_production"))
+    {
         return UserRole::ProductionReport;
     }
     return UserRole::Unknown;

@@ -11,21 +11,27 @@
 #include <QList>
 #include <QSpinBox>
 
-inline void clearFormLayout(QFormLayout *form)
+inline void clearFormLayout(QFormLayout* form)
 {
-    if (!form) {
+    if (!form)
+    {
         return;
     }
-    while (form->rowCount() > 0) {
+    while (form->rowCount() > 0)
+    {
         const QFormLayout::TakeRowResult row = form->takeRow(0);
-        if (row.labelItem) {
-            if (QWidget *widget = row.labelItem->widget()) {
+        if (row.labelItem)
+        {
+            if (QWidget* widget = row.labelItem->widget())
+            {
                 delete widget;
             }
             delete row.labelItem;
         }
-        if (row.fieldItem) {
-            if (QWidget *widget = row.fieldItem->widget()) {
+        if (row.fieldItem)
+        {
+            if (QWidget* widget = row.fieldItem->widget())
+            {
                 delete widget;
             }
             delete row.fieldItem;
@@ -33,75 +39,103 @@ inline void clearFormLayout(QFormLayout *form)
     }
 }
 
-inline void fillEntityCombo(QComboBox *combo, const QList<LookupItem> &items, bool includeAll)
+inline void fillEntityCombo(QComboBox* combo, const QList<LookupItem>& items, bool includeAll)
 {
     combo->clear();
-    if (includeAll) {
+    if (includeAll)
+    {
         combo->addItem(QObject::tr("Все"), QVariant());
     }
-    for (const LookupItem &item : items) {
+    for (const LookupItem& item : items)
+    {
         combo->addItem(item.label, lookupItemData(item.id));
     }
-    if (combo->count() > 0) {
+    if (combo->count() > 0)
+    {
         combo->setCurrentIndex(0);
     }
 }
 
-inline QComboBox *addOptionalEntityCombo(QFormLayout *form,
-                                         const QString &label,
-                                         QWidget *parent,
-                                         const QList<LookupItem> &items)
+inline QComboBox* addOptionalEntityCombo(QFormLayout* form,
+                                         const QString& label,
+                                         QWidget* parent,
+                                         const QList<LookupItem>& items)
 {
-    auto *combo = new QComboBox(parent);
+    auto* combo = new QComboBox(parent);
     fillEntityCombo(combo, items, true);
     form->addRow(label, combo);
     return combo;
 }
 
-inline QComboBox *addRequiredEntityCombo(QFormLayout *form,
-                                         const QString &label,
-                                         QWidget *parent,
-                                         const QList<LookupItem> &items)
+inline QComboBox* addRequiredEntityCombo(QFormLayout* form,
+                                         const QString& label,
+                                         QWidget* parent,
+                                         const QList<LookupItem>& items)
 {
-    auto *combo = new QComboBox(parent);
+    auto* combo = new QComboBox(parent);
     fillEntityCombo(combo, items, false);
     form->addRow(label, combo);
     return combo;
 }
 
-inline std::optional<int> optionalComboValue(const QComboBox *combo)
+inline std::optional<int> optionalComboValue(const QComboBox* combo)
 {
-    if (!combo || combo->currentIndex() < 0) {
+    if (!combo || combo->currentIndex() < 0)
+    {
         return std::nullopt;
     }
     const QVariant data = combo->currentData();
-    if (!data.isValid()) {
+    if (!data.isValid())
+    {
         return std::nullopt;
     }
     bool ok = false;
     const int value = data.toInt(&ok);
-    if (!ok) {
+    if (!ok)
+    {
         return std::nullopt;
     }
     return value;
 }
 
-inline std::optional<int> requireComboValue(const QComboBox *combo,
-                                            const QString &label,
-                                            QString *errorMessage)
+inline std::optional<int> requireComboValue(const QComboBox* combo,
+                                            const QString& label,
+                                            QString* errorMessage)
 {
-    if (const std::optional<int> value = optionalComboValue(combo)) {
+    if (const std::optional<int> value = optionalComboValue(combo))
+    {
         return value;
     }
-    if (errorMessage) {
+    if (errorMessage)
+    {
         *errorMessage = QObject::tr("Выберите значение: %1").arg(label);
     }
     return std::nullopt;
 }
 
-inline QSpinBox *addOptionalIntFilter(QFormLayout *form, const QString &label, QWidget *parent)
+inline bool isBlankText(const QString& text)
 {
-    auto *spin = new QSpinBox(parent);
+    return text.trimmed().isEmpty();
+}
+
+inline bool requireNonEmptyText(const QString& text,
+                                const QString& label,
+                                QString* errorMessage)
+{
+    if (!isBlankText(text))
+    {
+        return true;
+    }
+    if (errorMessage)
+    {
+        *errorMessage = QObject::tr("Заполните поле: %1").arg(label);
+    }
+    return false;
+}
+
+inline QSpinBox* addOptionalIntFilter(QFormLayout* form, const QString& label, QWidget* parent)
+{
+    auto* spin = new QSpinBox(parent);
     spin->setMinimum(-1);
     spin->setMaximum(999999);
     spin->setSpecialValueText(QObject::tr("Все"));
@@ -110,26 +144,27 @@ inline QSpinBox *addOptionalIntFilter(QFormLayout *form, const QString &label, Q
     return spin;
 }
 
-inline std::optional<int> optionalSpinValue(const QSpinBox *spin)
+inline std::optional<int> optionalSpinValue(const QSpinBox* spin)
 {
-    if (!spin || spin->value() < 0) {
+    if (!spin || spin->value() < 0)
+    {
         return std::nullopt;
     }
     return spin->value();
 }
 
-inline QDateEdit *addDateFilter(QFormLayout *form, const QString &label, const QDate &date, QWidget *parent)
+inline QDateEdit* addDateFilter(QFormLayout* form, const QString& label, const QDate& date, QWidget* parent)
 {
-    auto *edit = new QDateEdit(date, parent);
+    auto* edit = new QDateEdit(date, parent);
     edit->setCalendarPopup(true);
     edit->setDisplayFormat(QStringLiteral("yyyy-MM-dd"));
     form->addRow(label, edit);
     return edit;
 }
 
-inline QComboBox *addPersonnelTypeFilter(QFormLayout *form, QWidget *parent)
+inline QComboBox* addPersonnelTypeFilter(QFormLayout* form, QWidget* parent)
 {
-    auto *combo = new QComboBox(parent);
+    auto* combo = new QComboBox(parent);
     combo->addItem(QObject::tr("Все"), QString());
     combo->addItem(QStringLiteral("ITP"), QStringLiteral("ITP"));
     combo->addItem(QStringLiteral("Worker"), QStringLiteral("Worker"));

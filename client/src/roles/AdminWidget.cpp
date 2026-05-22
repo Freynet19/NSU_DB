@@ -10,12 +10,12 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 
-AdminWidget::AdminWidget(QWidget *parent)
+AdminWidget::AdminWidget(QWidget* parent)
     : QWidget(parent)
-    , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
+      , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
 {
     m_tabs = new QTabWidget(this);
-    auto *layout = new QVBoxLayout(this);
+    auto* layout = new QVBoxLayout(this);
     layout->addWidget(m_tabs);
 
     m_tabs->addTab(buildProceduresTab(), tr("Процедуры"));
@@ -23,12 +23,12 @@ AdminWidget::AdminWidget(QWidget *parent)
     m_tabs->addTab(new CrudHubWidget(this), tr("Справочники"));
 }
 
-QWidget *AdminWidget::buildProceduresTab()
+QWidget* AdminWidget::buildProceduresTab()
 {
     return new ProceduresHubWidget(m_repo, UserRole::Admin, this);
 }
 
-QWidget *AdminWidget::buildReportsTab()
+QWidget* AdminWidget::buildReportsTab()
 {
     return new ReportsHubWidget(m_repo, UserRole::Admin, this);
 }

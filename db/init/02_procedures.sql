@@ -25,6 +25,13 @@ BEGIN
             RAISE EXCEPTION 'Brigade % not found', p_brigade_id;
         END IF;
     END IF;
+    IF
+        NOT EXISTS (SELECT 1
+                    FROM personnel_category
+                    WHERE category_code = p_category_code
+                      AND type = 'Worker') THEN
+        RAISE EXCEPTION 'Category % is not a Worker category', p_category_code;
+    END IF;
     INSERT INTO employee (full_name, birth_date, hire_date, category_code)
     VALUES (p_full_name, p_birth_date, p_hire_date, p_category_code)
     RETURNING employee_id
@@ -49,6 +56,13 @@ $$
 DECLARE
     v_employee_id INTEGER;
 BEGIN
+    IF
+        NOT EXISTS (SELECT 1
+                    FROM personnel_category
+                    WHERE category_code = p_category_code
+                      AND type = 'ITP') THEN
+        RAISE EXCEPTION 'Category % is not an ITP category', p_category_code;
+    END IF;
     INSERT INTO employee (full_name, birth_date, hire_date, category_code)
     VALUES (p_full_name, p_birth_date, p_hire_date, p_category_code)
     RETURNING employee_id
@@ -80,16 +94,23 @@ BEGIN
         RAISE EXCEPTION 'Employee % not found', p_employee_id;
     END IF;
     IF
-        EXISTS (SELECT 1 FROM worker WHERE employee_id = p_employee_id) THEN
+        p_new_brigade_id IS NOT NULL
+            AND EXISTS (SELECT 1 FROM worker WHERE employee_id = p_employee_id) THEN
         UPDATE worker
         SET brigade_id = p_new_brigade_id
         WHERE employee_id = p_employee_id;
     END IF;
     IF
-        EXISTS (SELECT 1 FROM itp WHERE employee_id = p_employee_id) THEN
+        p_new_section_id IS NOT NULL
+            AND EXISTS (SELECT 1 FROM itp WHERE employee_id = p_employee_id) THEN
         UPDATE itp
         SET master_section_id = p_new_section_id
         WHERE employee_id = p_employee_id;
+    END IF;
+    IF
+        p_new_brigade_id IS NULL
+            AND p_new_section_id IS NULL THEN
+        RAISE EXCEPTION 'Укажите новую бригаду и/или участок для перевода';
     END IF;
     INSERT INTO personnel_movement (employee_id, movement_type, date, description)
     VALUES (p_employee_id, 'transfer', CURRENT_DATE, p_description);
@@ -102,6 +123,8 @@ CREATE
 )
     LANGUAGE plpgsql AS
 $$
+DECLARE
+    v_last_movement personnel_movement_type;
 BEGIN
     PERFORM
         employee_id
@@ -112,6 +135,16 @@ BEGIN
     IF
         NOT FOUND THEN
         RAISE EXCEPTION 'Employee % not found', p_employee_id;
+    END IF;
+    SELECT pm.movement_type
+    INTO v_last_movement
+    FROM personnel_movement pm
+    WHERE pm.employee_id = p_employee_id
+    ORDER BY pm.record_id DESC
+    LIMIT 1;
+    IF
+        v_last_movement = 'dismissal' THEN
+        RAISE EXCEPTION 'Сотрудник % уже уволен', p_employee_id;
     END IF;
     UPDATE worker
     SET brigade_id = NULL

@@ -9,12 +9,12 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 
-HrWidget::HrWidget(QWidget *parent)
+HrWidget::HrWidget(QWidget* parent)
     : QWidget(parent)
-    , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
+      , m_repo(new QueryRepository(DatabaseManager::instance().connectionName()))
 {
-    auto *tabs = new QTabWidget(this);
-    auto *layout = new QVBoxLayout(this);
+    auto* tabs = new QTabWidget(this);
+    auto* layout = new QVBoxLayout(this);
     layout->addWidget(tabs);
 
     tabs->addTab(new ProceduresHubWidget(m_repo, UserRole::Hr, this), tr("Кадровые операции"));

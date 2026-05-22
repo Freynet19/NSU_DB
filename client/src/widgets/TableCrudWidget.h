@@ -4,8 +4,9 @@
 
 class QSqlTableModel;
 
-namespace Ui {
-class TableCrudWidget;
+namespace Ui
+{
+    class TableCrudWidget;
 }
 
 class TableCrudWidget : public QWidget
@@ -13,9 +14,9 @@ class TableCrudWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit TableCrudWidget(const QString &tableName,
-                             const QString &filterClause = {},
-                             QWidget *parent = nullptr);
+    explicit TableCrudWidget(const QString& tableName,
+                             const QString& filterClause = {},
+                             QWidget* parent = nullptr);
     ~TableCrudWidget() override;
 
     QString tableName() const;
@@ -23,13 +24,18 @@ public:
 
     void refresh();
 
-signals:
+    signals :
+
     void dataCommitted();
 
-public slots:
+public
+    slots :
+
     bool maybeDiscardChanges();
 
-private slots:
+private
+    slots :
+
     void addRow();
     void removeRow();
     void saveChanges();
@@ -44,7 +50,7 @@ private:
 
     QString m_tableName;
     QString m_filterClause;
-    QSqlTableModel *m_model = nullptr;
+    QSqlTableModel* m_model = nullptr;
     bool m_dirty = false;
-    Ui::TableCrudWidget *ui = nullptr;
+    Ui::TableCrudWidget* ui = nullptr;
 };

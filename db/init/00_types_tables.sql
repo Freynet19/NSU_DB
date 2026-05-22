@@ -5,36 +5,36 @@ CREATE TYPE personnel_movement_type AS ENUM ('hire', 'transfer', 'dismissal');
 CREATE TABLE personnel_category
 (
     category_code SERIAL PRIMARY KEY,
-    name          VARCHAR(100)           NOT NULL,
+    name          VARCHAR(100)           NOT NULL CHECK (btrim(name) <> ''),
     type          employee_category_type NOT NULL
 );
 CREATE TABLE product_category
 (
     category_id SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL UNIQUE
+    name        VARCHAR(100) NOT NULL CHECK (btrim(name) <> '') UNIQUE
 );
 CREATE TABLE work_type
 (
     work_type_id SERIAL PRIMARY KEY,
-    name         VARCHAR(100) NOT NULL UNIQUE,
+    name         VARCHAR(100) NOT NULL CHECK (btrim(name) <> '') UNIQUE,
     description  TEXT
 );
 CREATE TABLE laboratory
 (
     laboratory_id SERIAL PRIMARY KEY,
-    name          VARCHAR(100) NOT NULL UNIQUE,
+    name          VARCHAR(100) NOT NULL CHECK (btrim(name) <> '') UNIQUE,
     location      VARCHAR(200)
 );
 CREATE TABLE workshop
 (
     workshop_id SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL,
+    name        VARCHAR(100) NOT NULL CHECK (btrim(name) <> ''),
     head_id     INTEGER
 );
 CREATE TABLE employee
 (
     employee_id   SERIAL PRIMARY KEY,
-    full_name     VARCHAR(200) NOT NULL,
+    full_name     VARCHAR(200) NOT NULL CHECK (btrim(full_name) <> ''),
     birth_date    DATE         NOT NULL,
     hire_date     DATE         NOT NULL,
     category_code INTEGER      NOT NULL REFERENCES personnel_category (category_code) ON DELETE RESTRICT
@@ -42,28 +42,28 @@ CREATE TABLE employee
 CREATE TABLE worker
 (
     employee_id INTEGER PRIMARY KEY REFERENCES employee (employee_id) ON DELETE CASCADE,
-    specialty   VARCHAR(100) NOT NULL,
+    specialty   VARCHAR(100) NOT NULL CHECK (btrim(specialty) <> ''),
     grade       INTEGER      NOT NULL CHECK (grade BETWEEN 1 AND 8),
     brigade_id  INTEGER
 );
 CREATE TABLE itp
 (
     employee_id       INTEGER PRIMARY KEY REFERENCES employee (employee_id) ON DELETE CASCADE,
-    position          VARCHAR(100) NOT NULL,
+    position          VARCHAR(100) NOT NULL CHECK (btrim(position) <> ''),
     qualification     VARCHAR(100),
     master_section_id INTEGER
 );
 CREATE TABLE section
 (
     section_id      SERIAL PRIMARY KEY,
-    name            VARCHAR(100) NOT NULL,
+    name            VARCHAR(100) NOT NULL CHECK (btrim(name) <> ''),
     workshop_id     INTEGER      NOT NULL REFERENCES workshop (workshop_id) ON DELETE RESTRICT ON UPDATE CASCADE,
     section_head_id INTEGER      REFERENCES itp (employee_id) ON DELETE SET NULL
 );
 CREATE TABLE brigade
 (
     brigade_id SERIAL PRIMARY KEY,
-    name       VARCHAR(100) NOT NULL,
+    name       VARCHAR(100) NOT NULL CHECK (btrim(name) <> ''),
     section_id INTEGER      NOT NULL REFERENCES section (section_id) ON DELETE RESTRICT ON UPDATE CASCADE,
     foreman_id INTEGER
 );
@@ -78,7 +78,7 @@ ALTER TABLE itp
 CREATE TABLE product_type
 (
     type_id       SERIAL PRIMARY KEY,
-    model_name    VARCHAR(100) NOT NULL,
+    model_name    VARCHAR(100) NOT NULL CHECK (btrim(model_name) <> ''),
     category_id   INTEGER      NOT NULL REFERENCES product_category (category_id) ON DELETE RESTRICT,
     workshop_id   INTEGER      NOT NULL REFERENCES workshop (workshop_id) ON DELETE RESTRICT,
     capacity      INTEGER CHECK (capacity > 0),
@@ -119,7 +119,7 @@ CREATE TABLE equipment
 (
     equipment_id  SERIAL PRIMARY KEY,
     laboratory_id INTEGER      NOT NULL REFERENCES laboratory (laboratory_id) ON DELETE RESTRICT,
-    name          VARCHAR(100) NOT NULL,
+    name          VARCHAR(100) NOT NULL CHECK (btrim(name) <> ''),
     type          VARCHAR(100)
 );
 CREATE TABLE test

@@ -5,7 +5,8 @@
 #include <QList>
 #include <QString>
 
-enum class LookupKind {
+enum class LookupKind
+{
     Workshop,
     Section,
     ProductCategory,
@@ -14,21 +15,28 @@ enum class LookupKind {
     ProductInstance,
     Employee,
     PersonnelCategory,
+    PersonnelCategoryWorker,
+    PersonnelCategoryItp,
     ProductionStage,
     AssemblyRecord,
     Test,
 };
 
+class QWidget;
+class LookupRepository;
+
+QList<LookupItem> loadLookupItems(LookupRepository* lookups, LookupKind kind, QWidget* messageParent);
+
 class LookupRepository
 {
 public:
-    explicit LookupRepository(const QString &connectionName);
+    explicit LookupRepository(const QString& connectionName);
 
-    QList<LookupItem> items(LookupKind kind, QString *errorMessage = nullptr);
+    QList<LookupItem> items(LookupKind kind, QString* errorMessage = nullptr);
     void clearCache();
 
 private:
-    QList<LookupItem> loadItems(LookupKind kind, QString *errorMessage);
+    QList<LookupItem> loadItems(LookupKind kind, QString* errorMessage);
 
     QString m_connectionName;
 };

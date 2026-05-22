@@ -10,11 +10,11 @@ class AdminWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit AdminWidget(QWidget *parent = nullptr);
+    explicit AdminWidget(QWidget* parent = nullptr);
 
 private:
-    QWidget *buildProceduresTab();
-    QWidget *buildReportsTab();
-    QTabWidget *m_tabs = nullptr;
-    QueryRepository *m_repo = nullptr;
+    QWidget* buildProceduresTab();
+    QWidget* buildReportsTab();
+    QTabWidget* m_tabs = nullptr;
+    QueryRepository* m_repo = nullptr;
 };

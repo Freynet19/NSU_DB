@@ -5,7 +5,8 @@
 #include <QList>
 #include <QString>
 
-enum class ReportId {
+enum class ReportId
+{
     ProductTypes = 1,
     FinishedInPeriod = 2,
     Personnel = 3,
@@ -32,9 +33,9 @@ struct ReportDefinition
 class ReportCatalog
 {
 public:
-    static const ReportDefinition &definition(ReportId id);
+    static const ReportDefinition& definition(ReportId id);
     static QList<ReportDefinition> reportsForRole(UserRole role);
-    static QString listItemTitle(const ReportDefinition &report);
+    static QString listItemTitle(const ReportDefinition& report);
     static bool hasCountQuery(ReportId id);
     static QString countSummaryLabel(ReportId id);
 };

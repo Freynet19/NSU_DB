@@ -9,11 +9,11 @@ class ProcedureFormWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ProcedureFormWidget(QWidget *parent = nullptr);
+    explicit ProcedureFormWidget(QWidget* parent = nullptr);
 
-    QFormLayout *formLayout() const;
+    QFormLayout* formLayout() const;
     void clearForm();
 
 private:
-    QFormLayout *m_form = nullptr;
+    QFormLayout* m_form = nullptr;
 };

@@ -5,7 +5,8 @@
 #include <QList>
 #include <QString>
 
-enum class ProcedureId {
+enum class ProcedureId
+{
     HireWorker,
     HireItp,
     TransferEmployee,
@@ -27,7 +28,7 @@ struct ProcedureDefinition
 class ProcedureCatalog
 {
 public:
-    static const ProcedureDefinition &definition(ProcedureId id);
+    static const ProcedureDefinition& definition(ProcedureId id);
     static QList<ProcedureDefinition> proceduresForRole(UserRole role);
-    static QString listItemTitle(const ProcedureDefinition &procedure);
+    static QString listItemTitle(const ProcedureDefinition& procedure);
 };

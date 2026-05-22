@@ -2,7 +2,8 @@
 
 #include <QString>
 
-enum class UserRole {
+enum class UserRole
+{
     Unknown,
     Admin,
     Hr,
@@ -10,4 +11,4 @@ enum class UserRole {
 };
 
 QString userRoleDisplayName(UserRole role);
-UserRole userRoleFromUsername(const QString &username);
+UserRole userRoleFromUsername(const QString& username);

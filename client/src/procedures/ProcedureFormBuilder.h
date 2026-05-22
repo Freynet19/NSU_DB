@@ -10,9 +10,9 @@ class QWidget;
 class ProcedureFormBuilder
 {
 public:
-    static void configure(ProcedureFormWidget *widget,
+    static void configure(ProcedureFormWidget* widget,
                           ProcedureId procedureId,
-                          QueryRepository *repository,
-                          LookupRepository *lookups,
-                          QWidget *messageParent);
+                          QueryRepository* repository,
+                          LookupRepository* lookups,
+                          QWidget* messageParent);
 };

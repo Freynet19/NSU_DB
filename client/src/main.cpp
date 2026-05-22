@@ -6,13 +6,14 @@
 #include <QMessageBox>
 #include <QSqlDatabase>
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
     QApplication::setApplicationName(QStringLiteral("automotive_erp_client"));
     QApplication::setOrganizationName(QStringLiteral("NSU"));
 
-    if (!QSqlDatabase::isDriverAvailable(QStringLiteral("QPSQL"))) {
+    if (!QSqlDatabase::isDriverAvailable(QStringLiteral("QPSQL")))
+    {
         QMessageBox::critical(
             nullptr,
             QObject::tr("Ошибка"),
@@ -21,7 +22,8 @@ int main(int argc, char *argv[])
     }
 
     LoginDialog login;
-    if (login.exec() != QDialog::Accepted || !DatabaseManager::instance().isConnected()) {
+    if (login.exec() != QDialog::Accepted || !DatabaseManager::instance().isConnected())
+    {
         return 0;
     }
 
