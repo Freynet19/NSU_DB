@@ -13,6 +13,18 @@ $$
 DECLARE
     v_employee_id INTEGER;
 BEGIN
+    IF
+        p_brigade_id IS NOT NULL THEN
+        PERFORM brigade_id
+        FROM brigade
+        WHERE brigade_id = p_brigade_id
+            FOR
+                UPDATE;
+        IF
+            NOT FOUND THEN
+            RAISE EXCEPTION 'Brigade % not found', p_brigade_id;
+        END IF;
+    END IF;
     INSERT INTO employee (full_name, birth_date, hire_date, category_code)
     VALUES (p_full_name, p_birth_date, p_hire_date, p_category_code)
     RETURNING employee_id
@@ -154,16 +166,20 @@ $$
 DECLARE
     v_instance_id INTEGER;
 BEGIN
-    UPDATE assembly_record
-    SET status   = 'completed',
-        end_date = p_end_date
+    SELECT instance_id
+    INTO v_instance_id
+    FROM assembly_record
     WHERE record_id = p_record_id
-    RETURNING instance_id
-        INTO v_instance_id;
+        FOR
+            UPDATE;
     IF
         NOT FOUND THEN
         RAISE EXCEPTION 'Assembly record % not found', p_record_id;
     END IF;
+    UPDATE assembly_record
+    SET status   = 'completed',
+        end_date = p_end_date
+    WHERE record_id = p_record_id;
     PERFORM
         instance_id
     FROM product_instance
@@ -197,15 +213,19 @@ DECLARE
     v_pending_tests
                   INTEGER;
 BEGIN
-    UPDATE test
-    SET result = p_result
+    SELECT instance_id
+    INTO v_instance_id
+    FROM test
     WHERE test_id = p_test_id
-    RETURNING instance_id
-        INTO v_instance_id;
+        FOR
+            UPDATE;
     IF
         NOT FOUND THEN
         RAISE EXCEPTION 'Test % not found', p_test_id;
     END IF;
+    UPDATE test
+    SET result = p_result
+    WHERE test_id = p_test_id;
     PERFORM
         instance_id
     FROM product_instance

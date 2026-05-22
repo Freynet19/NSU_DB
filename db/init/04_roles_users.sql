@@ -8,6 +8,14 @@ ALTER
     ROLE role_admin SET lock_timeout = '5s';
 ALTER
     ROLE role_admin SET statement_timeout = '30s';
+ALTER
+    ROLE role_hr SET lock_timeout = '5s';
+ALTER
+    ROLE role_hr SET statement_timeout = '30s';
+ALTER
+    ROLE role_production_report SET lock_timeout = '5s';
+ALTER
+    ROLE role_production_report SET statement_timeout = '30s';
 -- Пользователи workshop/laboratory — модель из отчёта; Qt-клиент их не использует (см. LoginDialog).
 
 -- пользователи

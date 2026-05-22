@@ -7,6 +7,7 @@
 - **Сервер данных:** PostgreSQL 18 в Docker (`docker-compose.yml`). Отдельный C++ API-сервер не используется.
 - **Клиент:** `client/` — прямое подключение по QPSQL под учётной записью роли (`user_admin`, `user_hr`, `user_production`).
 - **Слои клиента:** `DatabaseManager` (подключение, загрузка `PREPARE`), `QueryRepository` / `LookupRepository`, интерфейс по ролям (`AdminWidget`, `HrWidget`, `ProductionReportWidget`).
+- **Конкурентный доступ:** в процедурах — `SELECT … FOR UPDATE` перед изменением строк; у ролей `role_admin`, `role_hr`, `role_production_report` — `lock_timeout` 5 с, `statement_timeout` 30 с. CRUD администратора — отложенное сохранение (`OnManualSubmit`).
 
 ## Быстрый старт (WSL Ubuntu)
 
