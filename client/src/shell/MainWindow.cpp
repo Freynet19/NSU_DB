@@ -27,8 +27,6 @@ MainWindow::MainWindow(UserRole role, QWidget *parent)
     roleLayout->addWidget(createRoleWidget(role), 1);
 
     statusBar()->showMessage(userRoleDisplayName(role));
-
-    connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
 }
 
 MainWindow::~MainWindow()
