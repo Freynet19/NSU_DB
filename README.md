@@ -5,7 +5,8 @@
 ## Архитектура
 
 - **Сервер данных:** PostgreSQL 18 в Docker (`docker-compose.yml`). Отдельный C++ API-сервер не используется.
-- **Клиент:** `client/` — подключается по QPSQL к БД под учётной записью роли (`user_admin`, `user_hr`, `user_production`).
+- **Клиент:** `client/` — прямое подключение по QPSQL под учётной записью роли (`user_admin`, `user_hr`, `user_production`).
+- **Слои клиента:** `DatabaseManager` (подключение, загрузка `PREPARE`), `QueryRepository` / `LookupRepository`, интерфейс по ролям (`AdminWidget`, `HrWidget`, `ProductionReportWidget`).
 
 ## Быстрый старт (WSL Ubuntu)
 
@@ -14,7 +15,7 @@
 ```bash
 sudo apt update
 sudo apt install -y docker.io docker-compose-v2 \
-    cmake g++ qt6-base-dev qt6-base-dev-tools libqt6sql6-psql libpq-dev
+    cmake g++ qt6-base-dev qt6-base-dev-tools libqt6-sql6-psql libpq-dev
 ```
 
 Добавьте пользователя в группу `docker` и перелогиньтесь, если Docker требует `sudo`.
@@ -22,7 +23,7 @@ sudo apt install -y docker.io docker-compose-v2 \
 ### 2. База данных
 
 ```bash
-cd /home/freynet/clion/NSU_DB
+cd /path/to/NSU_DB
 docker compose up -d
 ```
 
@@ -47,7 +48,7 @@ cmake --build build -j
 ./build/client/automotive_erp_client
 ```
 
-Для CLion: откройте корневой `CMakeLists.txt`, укажите toolchain WSL.
+Для CLion: откройте корневой `CMakeLists.txt`, укажите toolchain WSL (каталог сборки по умолчанию — `cmake-build-debug/`).
 
 ### 4. Вход в приложение
 
@@ -58,6 +59,10 @@ cmake --build build -j
 | `user_production`  | `production_password`| Производственная отчётность |
 
 Параметры подключения по умолчанию: `localhost:5432`, БД `test`.
+
+В БД также созданы `user_workshop` и `user_laboratory` (см. `04_roles_users.sql`); в текущем клиенте в диалоге входа не используются.
+
+Справочник переменных окружения (для справки, клиент читает настройки из UI): `.env.example`.
 
 ## SQL-скрипты
 
@@ -77,19 +82,46 @@ cmake --build build -j
 
 ## Функциональность клиента
 
-- **Администратор:** CRUD всех таблиц, `CALL` всех процедур, 14 отчётов (`EXECUTE` PREPARE по всем `vw_*`).
-- **HR:** `proc_hire_worker`, `proc_hire_itp`, `proc_transfer_employee`, `proc_dismiss_employee`; отчёты 3, 4, 6, 7 (чтение `vw_personnel_data`, `vw_sections`, `vw_brigade_composition`, `vw_section_masters`).
-- **Отчётность:** только чтение — отчёты 1, 2, 8, 10, 11, 14 (соответствующие `vw_product_types`, `vw_finished_products`, `vw_current_products`, `vw_product_laboratories`, `vw_tested_products`).
+- **Администратор:** CRUD всех таблиц (вкладка «Справочники»), `CALL` всех 8 процедур, все 14 отчётов (`EXECUTE` подготовленных запросов по `vw_*`).
+- **Кадровик (HR):** процедуры `proc_hire_worker`, `proc_hire_itp`, `proc_transfer_employee`, `proc_dismiss_employee`; отчёты **3, 4, 6, 7** (кадровый состав — фильтры: цех, категория персонала, тип; участки; состав бригад; мастера участков).
+- **Производственная отчётность:** только чтение — отчёты **1, 2, 8, 10, 11, 14** (виды изделий; собранные за период; собираемые сейчас; лаборатории изделия; испытанные в лаборатории — лаборатория обязательна; список/число собираемых).
 
 При подключении клиент выполняет `PREPARE` из `prepare_statements.sql` в текущей сессии; тела запросов читают данные через представления `vw_*` (права ролей — `GRANT SELECT` в `04_roles_users.sql` / `05_grants_extend.sql`).
+
+После успешных процедур и сохранения справочников обновляются выпадающие списки (сброс кэша `LookupRepository`).
 
 ## Структура репозитория
 
 ```
 NSU_DB/
+├── .env.example
+├── .gitignore
+├── CMakeLists.txt
+├── README.md
 ├── docker-compose.yml
-├── db/init/
 ├── client/
-├── build/          # каталог сборки (не в git)
-└── Отчёт 23201 Смирнов версия 0.6.md
+│   ├── CMakeLists.txt
+│   ├── resources/
+│   │   ├── app.qrc
+│   │   └── prepare_statements.sql
+│   ├── src/
+│   │   ├── main.cpp
+│   │   ├── auth/
+│   │   ├── core/
+│   │   ├── crud/
+│   │   ├── db/
+│   │   ├── procedures/
+│   │   ├── reports/
+│   │   ├── roles/
+│   │   ├── shell/
+│   │   └── widgets/
+│   └── ui/
+└── db/init/
+    ├── 00_types_tables.sql
+    ├── 01_triggers.sql
+    ├── 02_procedures.sql
+    ├── 03_views.sql
+    ├── 04_roles_users.sql
+    ├── 05_grants_extend.sql
+    └── 06_seed.sql
 ```
